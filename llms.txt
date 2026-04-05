@@ -1,0 +1,18 @@
+# bookmarks-mcp
+> FastMCP 2.13 compliant MCP server providing a unified `bookmarks` portmanteau tool for CRUD operations, organization, sync, and AI-powered helpers. - **Primary Browser:** Firefox (SQLite-based bookmar...
+
+This project includes automated llms.txt generation for AI accessibility.
+
+## Docs
+- [Readme](README.md): FastMCP 2.13 compliant MCP server providing a unified `bookmarks` portmanteau tool for CRUD operatio...
+- [Mcp Configuration](MCP_CONFIGURATION.md): This guide explains how to configure the Browser Bookmarks MCP server with various MCP clients.
+- [Changelog](CHANGELOG.md): All notable changes to this project will be documented in this file.
+- [Assessment](ASSESSMENT.md): **Category**: MCP Server
+
+## Configuration
+- [Pyproject](pyproject.toml): Python project configuration and dependencies
+- [Package](web_sota\package.json): Node.js project configuration and dependencies
+- [Config](.git\config): Application configuration files
+
+## Optional
+- [Changelog](CHANGELOG.md): Project changelog information

@@ -13,19 +13,28 @@ FastMCP 2.13 compliant MCP server providing a unified `bookmarks` portmanteau to
 
 ## Quick Start
 
-### Installation
+##  Installation
 
+### Prerequisites
+- [uv](https://docs.astral.sh/uv/) installed (RECOMMENDED)
+- Python 3.12+
+
+###  Quick Start
+Run immediately via `uvx`:
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd bookmarks-mcp
-
-# Install dependencies (with uv recommended)
-pip install -e .
-# or
-uv pip install -e .
+uvx bookmarks-mcp
 ```
 
+###  Claude Desktop Integration
+Add to your `claude_desktop_config.json`:
+```json
+"mcpServers": {
+  "bookmarks-mcp": {
+    "command": "uv",
+    "args": ["--directory", "D:/Dev/repos/bookmarks-mcp", "run", "bookmarks-mcp"]
+  }
+}
+```
 ### Running the Server
 
 #### As a Python Module (Recommended for MCP clients)
@@ -112,22 +121,22 @@ The `bookmarks` tool supports the following operations:
 ### Project Structure
 ```
 bookmarks-mcp/
-├── src/browser_bookmarks_tools/
-│   ├── __init__.py          # Package initialization
-│   ├── __main__.py          # Module entry point for `python -m`
-│   ├── mcp_server.py       # FastMCP server implementation
-│   ├── bookmarks/           # Core bookmark operations
-│   │   ├── manager.py       # CRUD operations
-│   │   ├── organizer.py     # Organization features
-│   │   ├── portmanteau.py   # Main tool interface
-│   │   └── sync.py          # Cross-browser sync
-│   ├── ai/                  # AI-powered features
-│   │   ├── analyzer.py      # Content analysis
-│   │   ├── summarizer.py    # Summary generation
-│   │   └── tagger.py        # Smart tagging
-│   └── browsers/            # Browser-specific implementations
-├── tests/
-└── pyproject.toml
+ src/browser_bookmarks_tools/
+    __init__.py          # Package initialization
+    __main__.py          # Module entry point for `python -m`
+    mcp_server.py       # FastMCP server implementation
+    bookmarks/           # Core bookmark operations
+       manager.py       # CRUD operations
+       organizer.py     # Organization features
+       portmanteau.py   # Main tool interface
+       sync.py          # Cross-browser sync
+    ai/                  # AI-powered features
+       analyzer.py      # Content analysis
+       summarizer.py    # Summary generation
+       tagger.py        # Smart tagging
+    browsers/            # Browser-specific implementations
+ tests/
+ pyproject.toml
 ```
 
 ### Running Tests
@@ -185,3 +194,15 @@ export PYTHONPATH="/path/to/bookmarks-mcp/src:$PYTHONPATH"
 - Unified portmanteau tool interface
 - AI-powered bookmark analysis and tagging
 - Cross-browser synchronization
+
+
+##  Webapp Dashboard
+
+This MCP server includes a free, premium web interface for monitoring and control.
+By default, the web dashboard runs on port **10802**.
+*(Assigned ports: **10802** (Web dashboard frontend), **10803** (Web dashboard backend))*
+
+To start the webapp:
+1. Navigate to the `webapp` (or `web`, `frontend`) directory.
+2. Run `start.bat` (Windows) or `./start.ps1` (PowerShell).
+3. Open `http://localhost:10802` in your browser.

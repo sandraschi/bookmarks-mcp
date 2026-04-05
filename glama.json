@@ -1,0 +1,40 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": ["sandraschi"],
+  "name": "bookmarks-mcp",
+  "description": "Unified browser bookmark management with CRUD operations, AI-powered organization, cross-browser sync, and intelligent tagging.",
+  "type": "mcp_server",
+  "status": "beta",
+  "framework": "FastMCP 2.13+",
+  "tools": 1,
+  "transport": ["stdio"],
+  "keywords": [
+    "bookmarks",
+    "browser",
+    "firefox",
+    "chrome",
+    "organization",
+    "ai-tagging",
+    "sync",
+    "fastmcp",
+    "crud"
+  ],
+  "features": {
+    "bookmark_management": {
+      "enabled": true,
+      "operations": ["create", "read", "update", "delete", "organize", "sync"]
+    },
+    "ai_features": {
+      "enabled": true,
+      "capabilities": ["analyze", "tag", "summarize"]
+    },
+    "browser_support": {
+      "enabled": true,
+      "browsers": ["firefox", "chrome"]
+    }
+  }
+}
+
+
+
+

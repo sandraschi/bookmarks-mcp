@@ -1,0 +1,613 @@
+# bookmarks-mcp
+> FastMCP 2.13 compliant MCP server providing a unified `bookmarks` portmanteau tool for CRUD operations, organization, sync, and AI-powered helpers. - **Primary Browser:** Firefox (SQLite-based bookmar...
+
+Generated on: 2026-03-02 23:58:43
+
+## Docs - Full Content
+
+### Readme
+Source: README.md
+```
+# Browser Bookmarks Tools (MCP)
+
+FastMCP 2.13 compliant MCP server providing a unified `bookmarks` portmanteau tool for CRUD operations, organization, sync, and AI-powered helpers.
+
+## Features
+
+- **Primary Browser:** Firefox (SQLite-based bookmarks)
+- **Secondary Browsers:** Chrome, Edge, Brave (JSON-based bookmarks)
+- **Optional:** Safari (plist-based bookmarks)
+- **AI Features:** Smart tagging, summarization, and content analysis
+- **Cross-browser Sync:** Import/export between different browsers
+- **Organization:** Automatic categorization and duplicate detection
+
+## Quick Start
+
+## 🚀 Installation
+
+### Prerequisites
+- [uv](https://docs.astral.sh/uv/) installed (RECOMMENDED)
+- Python 3.12+
+
+### 📦 Quick Start
+Run immediately via `uvx`:
+```bash
+uvx bookmarks-mcp
+```
+
+### 🎯 Claude Desktop Integration
+Add to your `claude_desktop_config.json`:
+```json
+"mcpServers": {
+  "bookmarks-mcp": {
+    "command": "uv",
+    "args": ["--directory", "D:/Dev/repos/bookmarks-mcp", "run", "bookmarks-mcp"]
+  }
+}
+```
+### Running the Server
+
+#### As a Python Module (Recommended for MCP clients)
+```bash
+python -m browser_bookmarks_tools
+```
+
+#### As a Direct Script (Development)
+```bash
+python src/browser_bookmarks_tools/mcp_server.py
+```
+
+#### With uv
+```bash
+uv run python -m browser_bookmarks_tools
+```
+
+## MCP Client Configuration
+
+### Cursor IDE (mcp.json)
+```json
+{
+  "mcpServers": {
+    "bookmarks-mcp": {
+      "command": "python",
+      "args": ["-m", "browser_bookmarks_tools"],
+      "env": {
+        "PYTHONPATH": "D:/Dev/repos/bookmarks-mcp/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
+```
+
+### Claude Desktop (claude_desktop_config.json)
+```json
+{
+  "mcpServers": {
+    "bookmarks-mcp": {
+      "command": "python",
+      "args": ["-m", "browser_bookmarks_tools"],
+      "env": {
+        "PYTHONPATH": "/path/to/bookmarks-mcp/src"
+      }
+    }
+  }
+}
+```
+
+## Available Operations
+
+The `bookmarks` tool supports the following operations:
+
+- **`create`** - Add new bookmarks with metadata
+- **`read`** - Retrieve bookmarks by URL, title, or tags
+- **`update`** - Modify existing bookmarks
+- **`delete`** - Remove bookmarks
+- **`organize`** - Auto-categorize and clean up bookmarks
+- **`sync`** - Import/export between browsers
+- **`analyze`** - AI-powered content analysis and tagging
+- **`tag`** - Smart tag generation and management
+- **`summarize`** - Create bookmark summaries
+
+## Browser Support Details
+
+### Firefox (Primary)
+- **Storage:** `places.sqlite` database
+- **Features:** Full history, tags, folders, favicons
+- **Path:** `~/.mozilla/firefox/*/places.sqlite`
+
+### Chrome/Edge/Brave
+- **Storage:** JSON bookmark files
+- **Features:** Basic bookmarks with folders
+- **Path:** `~/Library/Application Support/Google/Chrome/Default/Bookmarks`
+
+### Safari (macOS only)
+- **Storage:** Binary plist files
+- **Features:** Basic bookmarks
+- **Path:** `~/Library/Safari/Bookmarks.plist`
+
+## Development
+
+### Project Structure
+```
+bookmarks-mcp/
+├── src/browser_bookmarks_tools/
+│   ├── __init__.py          # Package initialization
+│   ├── __main__.py          # Module entry point for `python -m`
+│   ├── mcp_server.py       # FastMCP server implementation
+│   ├── bookmarks/           # Core bookmark operations
+│   │   ├── manager.py       # CRUD operations
+│   │   ├── organizer.py     # Organization features
+│   │   ├── portmanteau.py   # Main tool interface
+│   │   └── sync.py          # Cross-browser sync
+│   ├── ai/                  # AI-powered features
+│   │   ├── analyzer.py      # Content analysis
+│   │   ├── summarizer.py    # Summary generation
+│   │   └── tagger.py        # Smart tagging
+│   └── browsers/            # Browser-specific implementations
+├── tests/
+└── pyproject.toml
+```
+
+### Running Tests
+```bash
+python -m pytest tests/
+```
+
+### Code Quality
+```bash
+# Format code
+black src/
+
+# Lint code
+ruff check src/
+
+# Type checking
+mypy src/
+```
+
+## Troubleshooting
+
+### "Module not found" errors
+Ensure `PYTHONPATH` includes the `src` directory:
+```bash
+export PYTHONPATH="/path/to/bookmarks-mcp/src:$PYTHONPATH"
+```
+
+### Browser permission issues
+- **Firefox:** Ensure Firefox is not running when accessing `places.sqlite`
+- **Chrome/Edge:** No special permissions needed for reading bookmark files
+- **Safari:** Requires macOS and appropriate file permissions
+
+### MCP connection issues
+- Verify the server starts without errors when run manually
+- Check that `PYTHONPATH` is correctly set in your MCP client configuration
+- Ensure no firewall/antivirus is blocking the connection
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
+
+## License
+
+[Add appropriate license information]
+
+## Changelog
+
+### v0.1.0
+- Initial FastMCP 2.13 compliant implementation
+- Firefox, Chrome, Edge, Brave, and Safari support
+- Unified portmanteau tool interface
+- AI-powered bookmark analysis and tagging
+- Cross-browser synchronization
+
+
+## 🌐 Webapp Dashboard
+
+This MCP server includes a free, premium web interface for monitoring and control.
+By default, the web dashboard runs on port **10802**.
+*(Assigned ports: **10802** (Web dashboard frontend), **10803** (Web dashboard backend))*
+
+To start the webapp:
+1. Navigate to the `webapp` (or `web`, `frontend`) directory.
+2. Run `start.bat` (Windows) or `./start.ps1` (PowerShell).
+3. Open `http://localhost:10802` in your browser.
+
+```
+
+### Mcp Configuration
+Source: MCP_CONFIGURATION.md
+```
+# MCP Configuration Guide
+
+This guide explains how to configure the Browser Bookmarks MCP server with various MCP clients.
+
+## Cursor IDE
+
+Add the following to your `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "bookmarks-mcp": {
+      "command": "python",
+      "args": ["-m", "browser_bookmarks_tools"],
+      "env": {
+        "PYTHONPATH": "D:/Dev/repos/bookmarks-mcp/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
+```
+
+### Windows Path Example
+```json
+{
+  "mcpServers": {
+    "bookmarks-mcp": {
+      "command": "python",
+      "args": ["-m", "browser_bookmarks_tools"],
+      "env": {
+        "PYTHONPATH": "C:\\Dev\\repos\\bookmarks-mcp\\src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
+```
+
+## Claude Desktop
+
+Add the following to your `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or the appropriate config file for your platform:
+
+```json
+{
+  "mcpServers": {
+    "bookmarks-mcp": {
+      "command": "python",
+      "args": ["-m", "browser_bookmarks_tools"],
+      "env": {
+        "PYTHONPATH": "/path/to/bookmarks-mcp/src"
+      }
+    }
+  }
+}
+```
+
+## Antigravity IDE
+
+Add the following to your `settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "bookmarks-mcp": {
+      "command": "python",
+      "args": ["-m", "browser_bookmarks_tools"],
+      "env": {
+        "PYTHONPATH": "D:/Dev/repos/bookmarks-mcp/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
+```
+
+## Troubleshooting
+
+### "Module not found" errors
+- Ensure `PYTHONPATH` points to the `src` directory containing `browser_bookmarks_tools`
+- Verify the path uses forward slashes (Unix-style) in JSON, even on Windows
+- Check that Python can import the module: `python -c "import browser_bookmarks_tools"`
+
+### Server won't start
+- Test manually: `PYTHONPATH=src python -m browser_bookmarks_tools`
+- Check for missing dependencies: `pip install -e .`
+- Verify Python version >= 3.11
+
+### Permission issues
+- Ensure read access to browser bookmark files
+- For Firefox: Close Firefox before accessing `places.sqlite`
+- For system browsers: May require elevated permissions on some systems
+
+## Environment Variables
+
+- `PYTHONPATH`: Must include the `src` directory
+- `PYTHONUNBUFFERED`: Recommended for better logging in MCP stdio mode
+
+## Alternative Configuration (Direct Script)
+
+If module execution doesn't work, you can run the server directly:
+
+```json
+{
+  "mcpServers": {
+    "bookmarks-mcp": {
+      "command": "python",
+      "args": ["D:/Dev/repos/bookmarks-mcp/src/browser_bookmarks_tools/mcp_server.py"],
+      "env": {
+        "PYTHONPATH": "D:/Dev/repos/bookmarks-mcp/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
+```
+
+This bypasses the `__main__.py` entry point and runs the server script directly.
+
+```
+
+### Changelog
+Source: CHANGELOG.md
+```
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepa-changelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Fixed
+- **MCP Module Entry Point**: Added `__main__.py` to enable `python -m browser_bookmarks_tools` execution
+- **Documentation**: Comprehensive README and MCP configuration guide
+
+## [0.1.0] - 2025-12-11
+
+### Added
+- Initial FastMCP 2.13 compliant implementation
+- Firefox bookmark support (SQLite)
+- Chrome/Edge/Brave bookmark support (JSON)
+- Safari bookmark support (plist) - macOS only
+- Unified portmanteau tool interface
+- AI-powered bookmark analysis and tagging
+- Cross-browser synchronization
+- CRUD operations for bookmarks
+- Automatic organization and duplicate detection
+- Smart tagging and summarization features
+
+### Technical
+- FastMCP 2.13 framework
+- Async/await architecture
+- Browser-specific implementations
+- Modular design with separate AI and bookmark management components
+- Comprehensive test suite
+
+```
+
+### Assessment
+Source: ASSESSMENT.md
+```
+# bookmarks-mcp - Project Assessment
+
+**Category**: MCP Server  
+**Assessment Date**: 2026-01-01  
+**Status**: Runt
+
+---
+
+## 📊 **Assessment Summary**
+
+| Metric | Value |
+|--------|-------|
+| **Status** | Runt |
+| **Development Status** | Needs Major Work |
+| **Runt Status** | RUNT - No MCPB packaging |
+| **Last Modified** | 12/11/2025 17:24:03 |
+| **Has Git Repository** | True |
+| **Has Proper Structure** | True |
+| **Has MCPB Packaging** | False |
+| **Has CI/CD Pipeline** | False |
+| **Has Monitoring Stack** | False |
+
+---
+
+## 🎯 **Standards Compliance**
+
+- ✅ Proper project structure
+---
+
+## 📋 **Important TODOs**
+
+- 🔴 **CRITICAL**: RUNT - No MCPB packaging
+- 🔴 **CRITICAL**: Implement MCPB packaging (manifest.json)
+- 🟡 **IMPORTANT**: Set up CI/CD pipeline
+- 🟡 **IMPORTANT**: Implement monitoring stack
+---
+
+## 🚀 **Next Steps**
+
+### **Major Refactoring Required**
+1. **Initialize Git repository** if missing
+2. **Implement proper project structure**
+3. **Set up MCPB packaging**
+4. **Create CI/CD pipeline**
+5. **Update documentation**
+6. **Implement monitoring stack**
+---
+
+## 📚 **References**
+
+- [MCP Central Documentation Standards](../STANDARDS.md)
+- [FastMCP 2.12 Migration Guide](../FASTMCP_2.12_MIGRATION.md)
+- [MCPB Packaging Standards](../MCPB_PACKAGING_STANDARDS.md)
+- [Monitoring Standards](../monitoring/README.md)
+
+---
+
+*Assessment generated on 2026-01-01 21:47:42*
+
+```
+
+## Configuration - Full Content
+
+### Pyproject
+Source: pyproject.toml
+```
+[project]
+name = "browser-bookmarks-tools"
+version = "0.1.0"
+description = "FastMCP 2.13 compliant MCP server for advanced bookmark management"
+authors = [{name = "Your Name"}]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.12"
+keywords = ["mcp", "bookmarks", "browser", "firefox", "chrome", "ai", "organization"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP :: Browsers",
+    "Topic :: Utilities",
+]
+dependencies = [
+  "mcp>=0.3.0",
+  "fastmcp>=2.14.5",
+  "pydantic>=2.7",
+  "aiohttp>=3.9",
+  "aiosqlite>=0.20",
+  "httpx>=0.27",
+  "ruff>=0.15.2",
+]
+
+[tool.uv]
+# uv uses this file for dependency resolution
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ANN"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+
+```
+
+### Package
+Source: web_sota\package.json
+```
+{
+  "name": "bookmarks-mcp-sota",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-progress": "^1.1.8",
+    "@radix-ui/react-scroll-area": "^1.2.10",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "@tanstack/react-query": "^5.90.21",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.563.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.13.0",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "autoprefixer": "^10.4.24",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.48.0",
+    "vite": "^7.3.1"
+  }
+}
+
+```
+
+### Config
+Source: .git\config
+```
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	symlinks = false
+	ignorecase = true
+[remote "origin"]
+	url = https://github.com/sandraschi/bookmark-master-mcp.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+
+```
+
+## Optional - Full Content
+
+### Changelog
+Source: CHANGELOG.md
+```
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepa-changelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Fixed
+- **MCP Module Entry Point**: Added `__main__.py` to enable `python -m browser_bookmarks_tools` execution
+- **Documentation**: Comprehensive README and MCP configuration guide
+
+## [0.1.0] - 2025-12-11
+
+### Added
+- Initial FastMCP 2.13 compliant implementation
+- Firefox bookmark support (SQLite)
+- Chrome/Edge/Brave bookmark support (JSON)
+- Safari bookmark support (plist) - macOS only
+- Unified portmanteau tool interface
+- AI-powered bookmark analysis and tagging
+- Cross-browser synchronization
+- CRUD operations for bookmarks
+- Automatic organization and duplicate detection
+- Smart tagging and summarization features
+
+### Technical
+- FastMCP 2.13 framework
+- Async/await architecture
+- Browser-specific implementations
+- Modular design with separate AI and bookmark management components
+- Comprehensive test suite
+
+```
