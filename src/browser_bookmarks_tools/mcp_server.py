@@ -1,4 +1,5 @@
 from typing import Any, Dict
+from fastmcp.server import create_proxy
 from mcp.server.fastmcp import FastMCP
 from .bookmarks.portmanteau import bookmarks
 from .transport import run_server
@@ -10,6 +11,14 @@ from .auth import authenticate
 from .web import setup_webapp
 
 mcp = FastMCP("bookmarks-mcp", version="0.1.0")
+
+# MCP Bridge: proxy to external MCP servers via MCP_BRIDGE_URLS env var
+_bridge_urls = os.environ.get("MCP_BRIDGE_URLS", "")
+if _bridge_urls:
+    for _bu in _bridge_urls.split(","):
+        _bu = _bu.strip()
+        if _bu:
+            mcp.add_provider(create_proxy(_bu))
 
 
 @mcp.tool()
