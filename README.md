@@ -7,6 +7,9 @@
   <a href="https://github.com/PrefectHQ/fastmcp"><img src="https://img.shields.io/badge/FastMCP-3.2-7c5cfc?style=flat-square" alt="FastMCP"></a>
 </p>
 
+
+> 📖 **[Installation Guide](INSTALL.md)** — quick start, manual setup, and troubleshooting
+
 FastMCP 3.1.0 compliant MCP server providing a unified `bookmarks` portmanteau tool for CRUD operations, organization, sync, and AI-powered helpers.
 
 ## Features
