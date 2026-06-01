@@ -1,0 +1,30 @@
+{
+  "productName": "Bookmarks MCP",
+  "version": "0.2.0",
+  "identifier": "ai.fleet.bookmarks-mcp",
+  "build": {
+    "frontendDist": "../web_sota/dist",
+    "devUrl": "http://localhost:10802",
+    "beforeDevCommand": "npm --prefix ../web_sota run dev"
+  },
+  "app": {
+    "windows": [{
+      "title": "Bookmark Master",
+      "width": 1280,
+      "height": 800,
+      "minWidth": 900,
+      "minHeight": 600
+    }],
+    "security": { "csp": null }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "externalBin": ["binaries/bookmarks-mcp-backend"]
+  },
+  "plugins": {
+    "shell": { "open": true },
+    "fs": { "requireLiteralLeadingDot": false },
+    "process": { "all": true }
+  }
+}

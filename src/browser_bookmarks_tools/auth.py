@@ -1,16 +1,28 @@
 import os
-from fastapi import HTTPException, status, Depends
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import secrets
 
-security = HTTPBasic()
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+
+security = HTTPBasic(auto_error=False)
 
 
-def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
-    """
-    Authenticates the user via basic auth.
-    Uses BOOKMARKS_WEB_USER and BOOKMARKS_WEB_PASS environment variables.
-    """
+def auth_enabled() -> bool:
+    return os.getenv("BOOKMARKS_WEB_AUTH", "1").lower() not in ("0", "false", "off", "no")
+
+
+def authenticate(credentials: HTTPBasicCredentials | None = Depends(security)) -> str:
+    """Authenticate via HTTP Basic when BOOKMARKS_WEB_AUTH is enabled."""
+    if not auth_enabled():
+        return "anonymous"
+
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
     correct_username = os.getenv("BOOKMARKS_WEB_USER", "admin")
     correct_password = os.getenv("BOOKMARKS_WEB_PASS", "mcp")
 

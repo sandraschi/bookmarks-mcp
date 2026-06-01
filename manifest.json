@@ -1,0 +1,52 @@
+{
+  "manifest_version": "0.2",
+  "name": "bookmarks-mcp",
+  "version": "0.2.0",
+  "description": "Multi-portmanteau browser bookmark MCP — Firefox, Chrome, Edge, Brave with web dashboard.",
+  "long_description": "FastMCP 3.3 MCP server for bookmark CRUD, search, sync, tagging, AI curation, and a React web dashboard. Supports stdio and HTTP transports on port 10803 with frontend on 10802.",
+  "author": {
+    "name": "Sandra Schi",
+    "email": "sandra@example.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sandraschi/bookmarks-mcp"
+  },
+  "homepage": "https://github.com/sandraschi/bookmarks-mcp",
+  "license": "MIT",
+  "keywords": ["mcp", "bookmarks", "firefox", "chrome", "edge", "brave", "browser"],
+  "server": {
+    "type": "python",
+    "entry_point": "src/browser_bookmarks_tools/mcp_server.py",
+    "mcp_config": {
+      "command": "python",
+      "args": ["-m", "browser_bookmarks_tools"],
+      "env": {
+        "PYTHONPATH": "${PWD}/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  },
+  "compatibility": {
+    "platforms": ["win32", "linux", "darwin"],
+    "python_version": ">=3.12"
+  },
+  "tools_generated": true,
+  "prompts": [
+    {
+      "name": "list_bookmarks_prompt",
+      "description": "List bookmarks from a browser profile",
+      "text": "List bookmarks from {browser} (profile: {profile_name})"
+    },
+    {
+      "name": "search_bookmarks_prompt",
+      "description": "Search bookmarks by title or URL",
+      "text": "Search {browser} bookmarks for: {search_query}"
+    },
+    {
+      "name": "sync_bookmarks_prompt",
+      "description": "Sync bookmarks between browsers",
+      "text": "Sync bookmarks from {source_browser} to {target_browser}"
+    }
+  ]
+}

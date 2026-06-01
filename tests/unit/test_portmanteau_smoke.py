@@ -1,16 +1,25 @@
-import asyncio
 import pytest
 
-from browser_bookmarks_tools.bookmarks.portmanteau import bookmarks
+from browser_bookmarks_tools.mcp_server import BookmarksMCPServer
 
 
 @pytest.mark.asyncio
-async def test_smoke_create():
-    result = await bookmarks("create", {"url": "https://example.com", "title": "Example"})
-    assert result["status"] == "created"
+async def test_multi_portmanteau_tools_registered():
+    server = BookmarksMCPServer()
+    from fastmcp.utilities.inspect import inspect_fastmcp
 
-
-@pytest.mark.asyncio
-async def test_smoke_analyze():
-    result = await bookmarks("analyze", {"text": "hello world"})
-    assert result["status"] == "ok"
+    info = await inspect_fastmcp(server.mcp)
+    names = {t.name for t in info.tools or []}
+    expected = {
+        "browser_bookmarks",
+        "firefox_profiles",
+        "firefox_backup",
+        "firefox_curated",
+        "firefox_tagging",
+        "firefox_utils",
+        "sync_bookmarks",
+        "chrome_profiles",
+        "ai_bookmark_portmanteau",
+    }
+    missing = expected - names
+    assert not missing, f"Missing tools: {missing}; got {sorted(names)}"

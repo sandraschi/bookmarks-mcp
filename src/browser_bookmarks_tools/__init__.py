@@ -1,1 +1,1 @@
-__all__ = ["mcp_server", "bookmarks", "ai", "browsers"]
+__all__ = ["ai", "bookmarks", "browsers", "mcp_server"]

@@ -1,1 +1,1 @@
-__all__ = ["firefox", "chrome", "edge", "safari"]
+__all__: list[str] = []

@@ -1,0 +1,18 @@
+[package]
+name = "bookmarks-mcp-native"
+version = "0.2.0"
+description = "Tauri desktop shell for bookmarks-mcp"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-process = "2"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

@@ -1,10 +1,20 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Dashboard } from '@/pages/dashboard';
-import { Chat } from '@/pages/chat';
-import { Settings } from '@/pages/settings';
-import { Tools } from '@/pages/tools';
-import { Help } from '@/pages/help';
+import {
+  Navigate,
+  Route,
+  BrowserRouter as Router,
+  Routes,
+} from "react-router-dom";
+import { AppLayout } from "@/components/layout/app-layout";
+import { BookmarksPage } from "@/pages/bookmarks";
+import { BulkOpsPage } from "@/pages/bulk-ops";
+import { Chat } from "@/pages/chat";
+import { Dashboard } from "@/pages/dashboard";
+import { Help } from "@/pages/help";
+import { SearchPage } from "@/pages/search";
+import { Settings } from "@/pages/settings";
+import { TagsPage } from "@/pages/tags";
+import { Tools } from "@/pages/tools";
+import { TreePage } from "@/pages/tree";
 
 function App() {
   return (
@@ -12,6 +22,11 @@ function App() {
       <AppLayout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/bookmarks" element={<BookmarksPage />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/tree" element={<TreePage />} />
+          <Route path="/bulk" element={<BulkOpsPage />} />
+          <Route path="/tags" element={<TagsPage />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/tools" element={<Tools />} />
           <Route path="/help" element={<Help />} />

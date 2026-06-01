@@ -1,13 +1,13 @@
-Param([switch]$Headless)
-$SkipFrontend = $Headless
+param(
+    [switch]$Headless,
+    [switch]$BackendOnly,
+    [switch]$FrontendOnly,
+    [switch]$NoBrowser
+)
 
-# --- SOTA Headless Standard ---
-if ($Headless -and ($Host.UI.RawUI.WindowTitle -notmatch 'Hidden')) {
-    Start-Process pwsh -ArgumentList '-NoProfile', '-File', $PSCommandPath, '-Headless' -WindowStyle Hidden
-    exit
-}
-$WindowStyle = if ($Headless) { 'Hidden' } else { 'Normal' }
-# ------------------------------
+. "D:/Dev/repos/mcp-central-docs/standards/FleetStartMode.ps1"
+$FleetStart = Initialize-FleetStartMode @PSBoundParameters
+Enter-FleetHeadlessConsole -Headless:$Headless -BackendOnly:$BackendOnly
 
 # Webapp Start - Standardized SOTA (Auto-Repaired V2.5)
 $WebPort = 10802
@@ -31,11 +31,13 @@ Write-Host "Starting Python backend on port $BackendPort ..." -ForegroundColor C
 
 # Use TRIPLE backtick to ensure $env:PYTHONPATH reaches the REAL shell
 $srcPath = Join-Path $ProjectRoot "src"
-$backendCmd = "`$env:PYTHONPATH = '$srcPath;$PSScriptRoot'; Set-Location '$PSScriptRoot'; uv run uvicorn browser_bookmarks_tools.server:app --host 127.0.0.1 --port $BackendPort --log-level info"
+$backendCmd = "`$env:BOOKMARKS_WEB_AUTH = '0'; `$env:PYTHONPATH = '$srcPath;$PSScriptRoot'; Set-Location '$PSScriptRoot'; uv run uvicorn browser_bookmarks_tools.server:app --host 127.0.0.1 --port $BackendPort --log-level info"
 
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd -WindowStyle Normal
 
 # 4. Run server (Vite dev)
+if (-not $FleetStart.RunFrontend) { return }
+
 Write-Host "Starting Vite frontend on port $WebPort ..." -ForegroundColor Green
 
 # 4b. Launch background task to open browser once frontend is ready (Auto-opened by Antigravity)
@@ -44,7 +46,7 @@ $pollAndOpen = "for (`$i = 0; `$i -lt 60; `$i++) { try { `$null = Invoke-WebRequ
 Start-Process powershell -ArgumentList "-NoProfile", "-WindowStyle", "Hidden", "-Command", $pollAndOpen
 
 Write-Host "Browser will open automatically when Vite is ready." -ForegroundColor Gray
-if ($SkipFrontend) { return }
+if (-not $FleetStart.RunFrontend) { return }
 npm run dev -- --port $WebPort --host
 
 

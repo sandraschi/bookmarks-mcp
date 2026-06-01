@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  python:
+    name: Python lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: latest
+      - run: uv sync --dev
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest tests/ -q
+
+  web:
+    name: Web build and lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web_sota
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web_sota/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run biome:ci
+      - run: npm run build
+
+  mcpb:
+    name: MCPB manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install -g @anthropic-ai/mcpb || true
+      - run: |
+          if command -v mcpb >/dev/null 2>&1; then
+            mcpb validate manifest.json
+          else
+            echo "MCPB CLI not installed — skipping validate"
+          fi

@@ -1,8 +1,6 @@
-"""Main entry point for the Browser Bookmarks MCP server with stdio support."""
+"""Main entry point for bookmarks-mcp."""
 
-import sys
-
-from .mcp_server import mcp
+from browser_bookmarks_tools.mcp_server import main
 
 if __name__ == "__main__":
-    mcp.run()
+    main()

@@ -1,0 +1,46 @@
+{
+  "checksum": "fixture",
+  "roots": {
+    "bookmark_bar": {
+      "children": [
+        {
+          "date_added": "13000000000000000",
+          "id": "5",
+          "name": "Example Site",
+          "type": "url",
+          "url": "https://example.com/docs"
+        },
+        {
+          "children": [
+            {
+              "date_added": "13000000000000001",
+              "id": "7",
+              "name": "Nested",
+              "type": "url",
+              "url": "https://example.com/nested"
+            }
+          ],
+          "date_added": "13000000000000002",
+          "date_modified": "13000000000000002",
+          "id": "6",
+          "name": "Dev",
+          "type": "folder"
+        }
+      ],
+      "date_added": "13000000000000003",
+      "date_modified": "13000000000000003",
+      "id": "1",
+      "name": "Bookmarks bar",
+      "type": "folder"
+    },
+    "other": {
+      "children": [],
+      "date_added": "13000000000000004",
+      "date_modified": "13000000000000004",
+      "id": "2",
+      "name": "Other bookmarks",
+      "type": "folder"
+    }
+  },
+  "version": 1
+}

@@ -4,22 +4,29 @@
   <a href="https://github.com/casey/just"><img src="https://img.shields.io/badge/just-ready_to_go-7c5cfc?style=flat-square&logo=just&logoColor=white" alt="Just"></a>
   <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
   <a href="https://python.org"><img src="https://img.shields.io/badge/Python-3.13+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"></a>
-  <a href="https://github.com/PrefectHQ/fastmcp"><img src="https://img.shields.io/badge/FastMCP-3.2-7c5cfc?style=flat-square" alt="FastMCP"></a>
+  <a href="https://github.com/PrefectHQ/fastmcp"><img src="https://img.shields.io/badge/FastMCP-3.3-7c5cfc?style=flat-square" alt="FastMCP"></a>
 </p>
 
 
 > 📖 **[Installation Guide](INSTALL.md)** — quick start, manual setup, and troubleshooting
 
-FastMCP 3.1.0 compliant MCP server providing a unified `bookmarks` portmanteau tool for CRUD operations, organization, sync, and AI-powered helpers.
+FastMCP 3.3 MCP server with **multiple portmanteau tools** (not one mega `bookmarks` tool). Ported from database-operations-mcp.
 
-## Features
+## MCP Tools (portmanteau surfaces)
 
-- **Primary Browser:** Firefox (SQLite-based bookmarks)
-- **Secondary Browsers:** Chrome, Edge, Brave (JSON-based bookmarks)
-- **Optional:** Safari (plist-based bookmarks)
-- **AI Features:** Smart tagging, summarization, and content analysis
-- **Cross-browser Sync:** Import/export between different browsers
-- **Organization:** Automatic categorization and duplicate detection
+| Tool | Purpose |
+|------|---------|
+| `browser_bookmarks` | Universal CRUD/search/export across Firefox, Chrome, Edge, Brave |
+| `firefox_profiles` | Firefox profile create/load/portmanteau profiles |
+| `firefox_backup` | Backup/restore Firefox profile data |
+| `firefox_curated` | Curated bookmark source collections |
+| `firefox_tagging` | Folder/year-based auto-tagging |
+| `firefox_utils` | Firefox paths, lock checks, places DB info |
+| `sync_bookmarks` | Cross-browser sync (dry-run supported) |
+| `chrome_profiles` | Chromium profile management |
+| `ai_bookmark_portmanteau` | AI categorize, dedupe, curate, maintain, export |
+
+`firefox_bookmarks` remains an internal helper used by `browser_bookmarks` for Firefox-specific SQLite operations.
 
 ## Quick Start
 
@@ -105,17 +112,11 @@ uv run python -m browser_bookmarks_tools
 
 ## Available Operations
 
-The `bookmarks` tool supports the following operations:
+See tool docstrings for full operation lists. Primary entry points:
 
-- **`create`** - Add new bookmarks with metadata
-- **`read`** - Retrieve bookmarks by URL, title, or tags
-- **`update`** - Modify existing bookmarks
-- **`delete`** - Remove bookmarks
-- **`organize`** - Auto-categorize and clean up bookmarks
-- **`sync`** - Import/export between browsers
-- **`analyze`** - AI-powered content analysis and tagging
-- **`tag`** - Smart tag generation and management
-- **`summarize`** - Create bookmark summaries
+- **`browser_bookmarks`** — `list_bookmarks`, `add_bookmark`, `search_bookmarks`, `find_duplicates`, `export_bookmarks`, tag ops, age analysis, broken links, etc.
+- **`sync_bookmarks`** — cross-browser transfer with `dry_run`
+- **`ai_bookmark_portmanteau`** — `categorize`, `dedupe`, `curate`, `maintain`, `export`
 
 ## Browser Support Details
 
@@ -225,9 +226,41 @@ This project adheres to **SOTA 14.1** industrial standards for high-fidelity age
 - Cross-browser synchronization
 
 
+## Web dashboard
+
+| Service | Port | Notes |
+|---------|------|-------|
+| Frontend (Vite) | **10802** | `web_sota/start.ps1` |
+| Backend (FastAPI + MCP) | **10803** | `MCP_TRANSPORT=http` |
+
+Pages: Dashboard, Bookmarks (CRUD + pagination), Search (folder/tag filters), Tree, Bulk ops (sync wizard, export download), Tags, AI Command, MCP Tools, Settings, Help.
+
+### Production auth
+
+HTTP Basic auth is **enabled by default** on `/api/*` routes.
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `BOOKMARKS_WEB_AUTH` | `1` | Set `0` to disable (dev only) |
+| `BOOKMARKS_WEB_USER` | `admin` | Username |
+| `BOOKMARKS_WEB_PASS` | `mcp` | Password |
+
+Configure credentials in **Settings → API auth** (stored in browser localStorage as Basic auth header).
+
+Root `/health` is unauthenticated for load balancers.
+
+### Tauri desktop
+
+```powershell
+cd native
+.\build.ps1
+```
+
+Spawns the MCP backend sidecar on 10803 and loads the built SPA.
+
 ##  Webapp Dashboard
 
-This MCP server includes a free, premium web interface for monitoring and control.
+This MCP server includes a React web interface for monitoring and control.
 By default, the web dashboard runs on port **10802**.
 *(Assigned ports: **10802** (Web dashboard frontend), **10803** (Web dashboard backend))*
 

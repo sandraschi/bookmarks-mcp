@@ -23,6 +23,28 @@ fix:
     Set-Location '{{justfile_directory()}}\web_sota'
     npx @biomejs/biome check --write .
 
+# Run Python tests
+test:
+    Set-Location '{{justfile_directory()}}'
+    uv run pytest tests/ -q
+
+# Build web dashboard
+webapp:
+    Set-Location '{{justfile_directory()}}\web_sota'
+    npm run build
+
+# Start backend HTTP bridge (port 10803)
+serve:
+    Set-Location '{{justfile_directory()}}'
+    $env:MCP_TRANSPORT = 'http'
+    $env:MCP_PORT = '10803'
+    $env:BOOKMARKS_WEB_AUTH = '0'
+    uv run bookmarks-mcp
+
+# Dev: backend + Vite (run in two terminals; this starts backend only)
+dev-backend:
+    just serve
+
 # ── Hardening ─────────────────────────────────────────────────────────────────
 
 # Execute Bandit security audit
