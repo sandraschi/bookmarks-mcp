@@ -2,8 +2,11 @@
 # Used by browser_bookmarks portmanteau tool.
 
 import logging
+from contextvars import ContextVar
+from pathlib import Path
 from typing import Any
 
+from browser_bookmarks_tools.services.browser.gecko_registry import get_gecko_spec
 from browser_bookmarks_tools.tools.firefox.age_analyzer import (
     find_forgotten_bookmarks,
     find_old_bookmarks,
@@ -12,8 +15,11 @@ from browser_bookmarks_tools.tools.firefox.age_analyzer import (
 from browser_bookmarks_tools.tools.firefox.bookmark_manager import BookmarkManager
 from browser_bookmarks_tools.tools.firefox.bulk_operations import BulkOperations
 from browser_bookmarks_tools.tools.firefox.core import FirefoxDatabaseUnlocker
-from browser_bookmarks_tools.tools.firefox.link_checker import LinkChecker
-from browser_bookmarks_tools.tools.firefox.search_tools import BookmarkSearcher
+from browser_bookmarks_tools.tools.firefox.exceptions import FirefoxNotClosedError
+from browser_bookmarks_tools.tools.firefox.link_checker import find_broken_links
+from browser_bookmarks_tools.tools.firefox.links import add_bookmark as links_add_bookmark
+from browser_bookmarks_tools.tools.firefox.search_tools import find_duplicates as search_find_duplicates
+from browser_bookmarks_tools.tools.firefox.search_tools import search_bookmarks as search_bookmarks_fn
 from browser_bookmarks_tools.tools.firefox.status import FirefoxStatusChecker
 from browser_bookmarks_tools.tools.firefox.tag_manager import TagManager
 from browser_bookmarks_tools.tools.firefox.utils import get_profile_directory
@@ -21,7 +27,8 @@ from browser_bookmarks_tools.tools.help_tools import HelpSystem
 
 logger = logging.getLogger(__name__)
 
-# Write operations that require Firefox to be closed
+_current_gecko_browser: ContextVar[str] = ContextVar("gecko_browser_id", default="firefox")
+
 WRITE_OPERATIONS = {
     "add_bookmark",
     "batch_update_tags",
@@ -31,36 +38,58 @@ WRITE_OPERATIONS = {
 }
 
 
-def _check_firefox_for_write(operation: str) -> dict[str, Any] | None:
-    """Check if Firefox is running before write operations.
+def _active_gecko_browser() -> str:
+    return _current_gecko_browser.get()
 
-    Returns error dict if Firefox is running, None if safe to proceed.
-    """
+
+def _check_gecko_for_write(browser_id: str, operation: str) -> dict[str, Any] | None:
+    """Check if the Gecko browser is running before write operations."""
     if operation not in WRITE_OPERATIONS:
         return None
 
-    status = FirefoxStatusChecker.is_firefox_running()
+    spec = get_gecko_spec(browser_id)
+    status = FirefoxStatusChecker.is_browser_running(browser_id)
     if status.get("is_running"):
         return {
             "success": False,
-            "error": "Firefox is running - cannot write to bookmark database",
+            "error": f"{spec.display_name} is running - cannot write to bookmark database",
             "operation": operation,
-            "firefox_status": status,
-            "solution": "Please close Firefox completely and try again",
+            "browser": browser_id,
+            "browser_family": "gecko",
+            "browser_status": status,
+            "solution": f"Please close {spec.display_name} completely and try again",
             "details": (
-                "Firefox locks its places.sqlite database while running. "
-                "Write operations require exclusive access. "
-                "Close all Firefox windows and wait a few seconds for the "
-                "process to fully exit before retrying."
+                f"{spec.display_name} locks places.sqlite while running. "
+                "Write operations require exclusive access."
             ),
-            "hint_for_mcp_client": "Tell the user to close Firefox browser before proceeding",
+            "hint_for_mcp_client": f"Tell the user to close {spec.display_name} before proceeding",
         }
     return None
 
 
-def _get_bruteforce_connection(profile_name: str | None):
-    """Get database connection using brute force methods (bypasses Firefox lock)."""
-    profile_path = get_profile_directory(profile_name)
+def _resolve_profile_path(profile_name: str | None, browser_id: str | None = None) -> Path | None:
+    return get_profile_directory(profile_name, browser_id or _active_gecko_browser())
+
+
+def _profile_path_str(profile_name: str | None, browser_id: str | None = None) -> str | None:
+    profile_path = _resolve_profile_path(profile_name, browser_id)
+    return str(profile_path) if profile_path else None
+
+
+def _profile_not_found(profile_name: str | None, browser_id: str | None = None) -> dict[str, Any]:
+    browser = browser_id or _active_gecko_browser()
+    return {
+        "success": False,
+        "error": f"Profile '{profile_name or 'default'}' not found for {browser}",
+        "profile_name": profile_name,
+        "browser": browser,
+        "browser_family": "gecko",
+    }
+
+
+def _get_bruteforce_connection(profile_name: str | None, browser_id: str | None = None):
+    """Get database connection using brute force methods (bypasses browser lock)."""
+    profile_path = get_profile_directory(profile_name, browser_id or _active_gecko_browser())
     if not profile_path:
         return None, "Profile not found"
 
@@ -238,6 +267,7 @@ async def _bruteforce_read_operation(
 async def firefox_bookmarks(
     operation: str,
     profile_name: str | None = None,
+    browser_id: str = "firefox",
     folder_id: int | None = None,
     bookmark_id: int | None = None,
     url: str | None = None,
@@ -558,106 +588,128 @@ async def firefox_bookmarks(
         - firefox_tagging: Advanced tag management operations
     """
 
-    # Read operations that support force_access
-    read_operations = {
-        "list_bookmarks",
-        "get_bookmark",
-        "search_bookmarks",
-        "find_duplicates",
-        "list_tags",
-        "find_similar_tags",
-        "find_old_bookmarks",
-        "find_forgotten_bookmarks",
-        "get_bookmark_stats",
-    }
+    browser_key = browser_id.lower()
+    get_gecko_spec(browser_key)
+    token = _current_gecko_browser.set(browser_key)
 
-    # Handle force_access for read operations when Firefox is running
-    if force_access and operation in read_operations:
-        status = FirefoxStatusChecker.is_firefox_running()
-        if status.get("is_running"):
-            logger.info(f"Firefox running, using brute force for {operation}")
-            return await _bruteforce_read_operation(
-                operation,
-                profile_name,
-                folder_id,
-                bookmark_id,
-                search_query,
-                search_type,
-                similarity_threshold,
-                age_days,
-            )
-
-    # Block write operations when Firefox is running with explicit error
-    firefox_error = _check_firefox_for_write(operation)
-    if firefox_error:
-        logger.warning(f"Blocking {operation} - Firefox is running")
-        return firefox_error
-
-    if operation == "list_bookmarks":
-        return await _list_bookmarks(profile_name, folder_id)
-    elif operation == "get_bookmark":
-        return await _get_bookmark(bookmark_id, profile_name)
-    elif operation == "add_bookmark":
-        return await _add_bookmark(profile_name, url, title, tags)
-    elif operation == "search_bookmarks":
-        return await _search_bookmarks(profile_name, search_query, search_type)
-    elif operation == "find_duplicates":
-        return await _find_duplicates(profile_name, similarity_threshold)
-    elif operation == "export_bookmarks":
-        return await _export_bookmarks(profile_name, export_format, export_path)
-    elif operation == "batch_update_tags":
-        return await _batch_update_tags(profile_name, tags, batch_size)
-    elif operation == "remove_unused_tags":
-        return await _remove_unused_tags(profile_name)
-    elif operation == "list_tags":
-        return await _list_tags(profile_name)
-    elif operation == "find_similar_tags":
-        return await _find_similar_tags(profile_name)
-    elif operation == "merge_tags":
-        return await _merge_tags(profile_name, tags)
-    elif operation == "clean_up_tags":
-        return await _clean_up_tags(profile_name)
-    elif operation == "find_old_bookmarks":
-        return await _find_old_bookmarks(profile_name, age_days)
-    elif operation == "find_forgotten_bookmarks":
-        return await _find_forgotten_bookmarks(profile_name, age_days)
-    elif operation == "refresh_bookmarks":
-        return await _refresh_bookmarks(profile_name, batch_size)
-    elif operation == "get_bookmark_stats":
-        return await _get_bookmark_stats(profile_name)
-    elif operation == "find_broken_links":
-        return await _find_broken_links(profile_name, check_links)
-    else:
-        return {
-            "success": False,
-            "error": f"Unknown operation: {operation}",
-            "available_operations": [
-                "list_bookmarks",
-                "get_bookmark",
-                "add_bookmark",
-                "search_bookmarks",
-                "find_duplicates",
-                "export_bookmarks",
-                "batch_update_tags",
-                "remove_unused_tags",
-                "list_tags",
-                "find_similar_tags",
-                "merge_tags",
-                "clean_up_tags",
-                "find_old_bookmarks",
-                "find_forgotten_bookmarks",
-                "refresh_bookmarks",
-                "get_bookmark_stats",
-                "find_broken_links",
-            ],
+    try:
+        read_operations = {
+            "list_bookmarks",
+            "get_bookmark",
+            "search_bookmarks",
+            "find_duplicates",
+            "list_tags",
+            "find_similar_tags",
+            "find_old_bookmarks",
+            "find_forgotten_bookmarks",
+            "get_bookmark_stats",
         }
+
+        if force_access and operation in read_operations:
+            status = FirefoxStatusChecker.is_browser_running(browser_key)
+            if status.get("is_running"):
+                logger.info("%s running, using brute force for %s", browser_key, operation)
+                result = await _bruteforce_read_operation(
+                    operation,
+                    profile_name,
+                    folder_id,
+                    bookmark_id,
+                    search_query,
+                    search_type,
+                    similarity_threshold,
+                    age_days,
+                )
+                result.setdefault("browser", browser_key)
+                result.setdefault("browser_family", "gecko")
+                return result
+
+        gecko_error = _check_gecko_for_write(browser_key, operation)
+        if gecko_error:
+            logger.warning("Blocking %s on %s - browser is running", operation, browser_key)
+            return gecko_error
+
+        if operation == "list_bookmarks":
+            result = await _list_bookmarks(profile_name, folder_id)
+        elif operation == "get_bookmark":
+            result = await _get_bookmark(bookmark_id, profile_name)
+        elif operation == "add_bookmark":
+            result = await _add_bookmark(profile_name, url, title, tags)
+        elif operation == "search_bookmarks":
+            result = await _search_bookmarks(profile_name, search_query, search_type)
+        elif operation == "find_duplicates":
+            result = await _find_duplicates(profile_name, similarity_threshold)
+        elif operation == "export_bookmarks":
+            result = await _export_bookmarks(profile_name, export_format, export_path)
+        elif operation == "batch_update_tags":
+            result = await _batch_update_tags(profile_name, tags, batch_size)
+        elif operation == "remove_unused_tags":
+            result = await _remove_unused_tags(profile_name)
+        elif operation == "list_tags":
+            result = await _list_tags(profile_name)
+        elif operation == "find_similar_tags":
+            result = await _find_similar_tags(profile_name)
+        elif operation == "merge_tags":
+            result = await _merge_tags(profile_name, tags)
+        elif operation == "clean_up_tags":
+            result = await _clean_up_tags(profile_name)
+        elif operation == "find_old_bookmarks":
+            result = await _find_old_bookmarks(profile_name, age_days)
+        elif operation == "find_forgotten_bookmarks":
+            result = await _find_forgotten_bookmarks(profile_name, age_days)
+        elif operation == "refresh_bookmarks":
+            result = await _refresh_bookmarks(profile_name, batch_size)
+        elif operation == "get_bookmark_stats":
+            result = await _get_bookmark_stats(profile_name)
+        elif operation == "find_broken_links":
+            result = await _find_broken_links(profile_name, check_links)
+        else:
+            result = {
+                "success": False,
+                "error": f"Unknown operation: {operation}",
+                "available_operations": [
+                    "list_bookmarks",
+                    "get_bookmark",
+                    "add_bookmark",
+                    "search_bookmarks",
+                    "find_duplicates",
+                    "export_bookmarks",
+                    "batch_update_tags",
+                    "remove_unused_tags",
+                    "list_tags",
+                    "find_similar_tags",
+                    "merge_tags",
+                    "clean_up_tags",
+                    "find_old_bookmarks",
+                    "find_forgotten_bookmarks",
+                    "refresh_bookmarks",
+                    "get_bookmark_stats",
+                    "find_broken_links",
+                ],
+            }
+
+        if isinstance(result, dict):
+            result.setdefault("browser", browser_key)
+            result.setdefault("browser_family", "gecko")
+            spec = get_gecko_spec(browser_key)
+            if spec.read_only_recommended and operation in WRITE_OPERATIONS and result.get("success"):
+                result["warning"] = spec.notes
+        return result
+    finally:
+        _current_gecko_browser.reset(token)
 
 
 async def _list_bookmarks(profile_name: str | None, folder_id: int | None) -> dict[str, Any]:
     """List bookmarks from a profile or folder."""
+    profile_path = _resolve_profile_path(profile_name)
+    if not profile_path:
+        err = _profile_not_found(profile_name)
+        err["bookmarks"] = []
+        err["count"] = 0
+        return err
+
     try:
-        manager = BookmarkManager(profile_name)
-        bookmarks = await manager.list_bookmarks(folder_id)
+        manager = BookmarkManager(profile_path)
+        bookmarks = manager.get_bookmarks(folder_id)
 
         return {
             "success": True,
@@ -668,6 +720,15 @@ async def _list_bookmarks(profile_name: str | None, folder_id: int | None) -> di
             "count": len(bookmarks),
         }
 
+    except FirefoxNotClosedError as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "profile_name": profile_name,
+            "bookmarks": [],
+            "count": 0,
+            "solution": "Close Firefox completely and try again, or retry with force_access=True",
+        }
     except Exception as e:
         logger.error(f"Error listing bookmarks: {e}", exc_info=True)
         return {
@@ -681,12 +742,28 @@ async def _list_bookmarks(profile_name: str | None, folder_id: int | None) -> di
 
 async def _get_bookmark(bookmark_id: int | None, profile_name: str | None) -> dict[str, Any]:
     """Get details for a specific bookmark."""
-    try:
-        if not bookmark_id:
-            raise ValueError("Bookmark ID is required")
+    if not bookmark_id:
+        return {
+            "success": False,
+            "error": "Bookmark ID is required",
+            "profile_name": profile_name,
+            "bookmark_id": bookmark_id,
+        }
 
-        manager = BookmarkManager(profile_name)
-        bookmark = await manager.get_bookmark(bookmark_id)
+    profile_path = _resolve_profile_path(profile_name)
+    if not profile_path:
+        return {**_profile_not_found(profile_name), "bookmark_id": bookmark_id}
+
+    try:
+        manager = BookmarkManager(profile_path)
+        bookmark = manager.get_bookmark(bookmark_id)
+        if not bookmark:
+            return {
+                "success": False,
+                "error": f"Bookmark {bookmark_id} not found",
+                "profile_name": profile_name,
+                "bookmark_id": bookmark_id,
+            }
 
         return {
             "success": True,
@@ -696,6 +773,14 @@ async def _get_bookmark(bookmark_id: int | None, profile_name: str | None) -> di
             "bookmark": bookmark,
         }
 
+    except FirefoxNotClosedError as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "profile_name": profile_name,
+            "bookmark_id": bookmark_id,
+            "solution": "Close Firefox completely and try again, or retry with force_access=True",
+        }
     except Exception as e:
         logger.error(f"Error getting bookmark: {e}", exc_info=True)
         return {
@@ -710,21 +795,36 @@ async def _add_bookmark(
     profile_name: str | None, url: str | None, title: str | None, tags: list[str] | None
 ) -> dict[str, Any]:
     """Add a new bookmark to the profile."""
-    try:
-        if not url:
-            raise ValueError("URL is required")
-
-        manager = BookmarkManager(profile_name)
-        bookmark_id = await manager.add_bookmark(url, title, tags)
-
+    if not url:
         return {
-            "success": True,
-            "message": "Bookmark added successfully",
+            "success": False,
+            "error": "URL is required",
             "profile_name": profile_name,
-            "bookmark_id": bookmark_id,
             "url": url,
-            "title": title,
-            "tags": tags,
+        }
+
+    try:
+        result = await links_add_bookmark(
+            url=url,
+            title=title or url,
+            tags=tags,
+            profile_name=profile_name,
+        )
+        if result.get("status") == "success":
+            return {
+                "success": True,
+                "message": "Bookmark added successfully",
+                "profile_name": profile_name,
+                "bookmark_id": result.get("bookmark_id"),
+                "url": url,
+                "title": title,
+                "tags": tags,
+            }
+        return {
+            "success": False,
+            "error": result.get("message", "Failed to add bookmark"),
+            "profile_name": profile_name,
+            "url": url,
         }
 
     except Exception as e:
@@ -739,13 +839,30 @@ async def _add_bookmark(
 
 async def _search_bookmarks(profile_name: str | None, search_query: str | None, search_type: str) -> dict[str, Any]:
     """Search bookmarks using various criteria."""
+    if not search_query:
+        return {
+            "success": False,
+            "error": "Search query is required",
+            "profile_name": profile_name,
+            "search_query": search_query,
+            "results": [],
+            "count": 0,
+        }
+
     try:
-        if not search_query:
-            raise ValueError("Search query is required")
+        result = await search_bookmarks_fn(search_query, profile_name=profile_name)
+        if result.get("status") != "success":
+            return {
+                "success": False,
+                "error": result.get("message", "Search failed"),
+                "profile_name": profile_name,
+                "search_query": search_query,
+                "search_type": search_type,
+                "results": [],
+                "count": 0,
+            }
 
-        searcher = BookmarkSearcher(profile_name)
-        results = await searcher.search_bookmarks(search_query, search_type)
-
+        results = result.get("results") or result.get("bookmarks") or []
         return {
             "success": True,
             "message": f"Search completed for '{search_query}'",
@@ -771,9 +888,18 @@ async def _search_bookmarks(profile_name: str | None, search_query: str | None, 
 async def _find_duplicates(profile_name: str | None, similarity_threshold: float) -> dict[str, Any]:
     """Find duplicate bookmarks based on URL or content."""
     try:
-        searcher = BookmarkSearcher(profile_name)
-        duplicates = await searcher.find_duplicates(similarity_threshold)
+        result = await search_find_duplicates(by="url", profile_name=profile_name)
+        if result.get("status") != "success":
+            return {
+                "success": False,
+                "error": result.get("message", "Duplicate search failed"),
+                "profile_name": profile_name,
+                "similarity_threshold": similarity_threshold,
+                "duplicates": [],
+                "duplicate_groups": 0,
+            }
 
+        duplicates = result.get("duplicates") or []
         return {
             "success": True,
             "message": "Duplicate search completed",
@@ -797,7 +923,7 @@ async def _find_duplicates(profile_name: str | None, similarity_threshold: float
 async def _export_bookmarks(profile_name: str | None, export_format: str, export_path: str | None) -> dict[str, Any]:
     """Export bookmarks to various formats."""
     try:
-        bulk_ops = BulkOperations(profile_name)
+        bulk_ops = BulkOperations(_resolve_profile_path(profile_name))
         result = await bulk_ops.export_bookmarks(export_format, export_path)
 
         return {
@@ -825,7 +951,7 @@ async def _batch_update_tags(profile_name: str | None, tags: list[str] | None, b
         if not tags:
             raise ValueError("Tags are required")
 
-        bulk_ops = BulkOperations(profile_name)
+        bulk_ops = BulkOperations(_resolve_profile_path(profile_name))
         result = await bulk_ops.batch_update_tags(tags, batch_size)
 
         return {
@@ -850,7 +976,7 @@ async def _batch_update_tags(profile_name: str | None, tags: list[str] | None, b
 async def _remove_unused_tags(profile_name: str | None) -> dict[str, Any]:
     """Remove tags that are no longer used."""
     try:
-        bulk_ops = BulkOperations(profile_name)
+        bulk_ops = BulkOperations(_resolve_profile_path(profile_name))
         result = await bulk_ops.remove_unused_tags()
 
         return {
@@ -872,7 +998,7 @@ async def _remove_unused_tags(profile_name: str | None) -> dict[str, Any]:
 async def _list_tags(profile_name: str | None) -> dict[str, Any]:
     """List all tags used in bookmarks."""
     try:
-        tag_manager = TagManager(profile_name)
+        tag_manager = TagManager(_resolve_profile_path(profile_name))
         tags = await tag_manager.list_tags()
 
         return {
@@ -897,7 +1023,7 @@ async def _list_tags(profile_name: str | None) -> dict[str, Any]:
 async def _find_similar_tags(profile_name: str | None) -> dict[str, Any]:
     """Find tags with similar names."""
     try:
-        tag_manager = TagManager(profile_name)
+        tag_manager = TagManager(_resolve_profile_path(profile_name))
         similar_tags = await tag_manager.find_similar_tags()
 
         return {
@@ -925,7 +1051,7 @@ async def _merge_tags(profile_name: str | None, tags: list[str] | None) -> dict[
         if not tags or len(tags) < 2:
             raise ValueError("At least 2 tags are required for merging")
 
-        tag_manager = TagManager(profile_name)
+        tag_manager = TagManager(_resolve_profile_path(profile_name))
         result = await tag_manager.merge_tags(tags)
 
         return {
@@ -949,7 +1075,7 @@ async def _merge_tags(profile_name: str | None, tags: list[str] | None) -> dict[
 async def _clean_up_tags(profile_name: str | None) -> dict[str, Any]:
     """Clean up and standardize tag names."""
     try:
-        tag_manager = TagManager(profile_name)
+        tag_manager = TagManager(_resolve_profile_path(profile_name))
         result = await tag_manager.clean_up_tags()
 
         return {
@@ -971,7 +1097,7 @@ async def _clean_up_tags(profile_name: str | None) -> dict[str, Any]:
 async def _find_old_bookmarks(profile_name: str | None, age_days: int) -> dict[str, Any]:
     """Find bookmarks CREATED more than N days ago."""
     try:
-        result = await find_old_bookmarks(age_days, profile_name)
+        result = await find_old_bookmarks(age_days, _profile_path_str(profile_name))
 
         return {
             "success": True,
@@ -996,7 +1122,7 @@ async def _find_old_bookmarks(profile_name: str | None, age_days: int) -> dict[s
 async def _find_forgotten_bookmarks(profile_name: str | None, age_days: int) -> dict[str, Any]:
     """Find bookmarks not VISITED in N days - good candidates for archiving."""
     try:
-        result = await find_forgotten_bookmarks(age_days, profile_name)
+        result = await find_forgotten_bookmarks(age_days, _profile_path_str(profile_name))
 
         return {
             "success": True,
@@ -1033,8 +1159,12 @@ async def _refresh_bookmarks(profile_name: str | None, batch_size: int) -> dict[
     import aiohttp
 
     try:
-        manager = BookmarkManager(profile_name)
-        bookmarks = await manager.list_bookmarks()
+        profile_path = _resolve_profile_path(profile_name)
+        if not profile_path:
+            return {**_profile_not_found(profile_name), "old_bookmarks": [], "count": 0}
+
+        manager = BookmarkManager(profile_path)
+        bookmarks = manager.get_bookmarks()
 
         results = {
             "checked": 0,
@@ -1171,8 +1301,12 @@ async def _refresh_bookmarks(profile_name: str | None, batch_size: int) -> dict[
 
 async def _get_bookmark_stats(profile_name: str | None) -> dict[str, Any]:
     """Get statistics about bookmark collection."""
+    profile_path = _profile_path_str(profile_name)
+    if not profile_path:
+        return {**_profile_not_found(profile_name), "stats": {}}
+
     try:
-        result = await get_bookmark_stats(profile_name)
+        result = await get_bookmark_stats(profile_path)
 
         return {
             "success": True,
@@ -1193,9 +1327,12 @@ async def _get_bookmark_stats(profile_name: str | None) -> dict[str, Any]:
 
 async def _find_broken_links(profile_name: str | None, check_links: bool) -> dict[str, Any]:
     """Find bookmarks with broken or inaccessible URLs."""
+    profile_path = _profile_path_str(profile_name)
+    if not profile_path:
+        return {**_profile_not_found(profile_name), "broken_links": [], "count": 0}
+
     try:
-        link_checker = LinkChecker(profile_name)
-        result = await link_checker.find_broken_links(check_links)
+        result = await find_broken_links(profile_path=profile_path)
 
         return {
             "success": True,
@@ -1203,7 +1340,7 @@ async def _find_broken_links(profile_name: str | None, check_links: bool) -> dic
             "profile_name": profile_name,
             "check_links": check_links,
             "broken_links": result.get("broken_links", []),
-            "count": result.get("count", 0),
+            "count": len(result.get("broken_links", [])),
         }
 
     except Exception as e:

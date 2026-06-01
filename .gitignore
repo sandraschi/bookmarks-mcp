@@ -24,3 +24,6 @@ Thumbs.db
 target/
 
 _dashboard/
+
+# MCPB staging
+mcpb-build/

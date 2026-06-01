@@ -4,25 +4,16 @@ import os
 from pathlib import Path
 from typing import Any
 
+from browser_bookmarks_tools.services.browser.chromium_registry import legacy_default_bookmark_paths
+
 
 def _expand(path: str) -> Path:
     return Path(os.path.expandvars(path))
 
 
-CHROME_BOOKMARK_PATHS = [
-    r"%LOCALAPPDATA%\Google\Chrome\User Data\Default\Bookmarks",
-    r"%USERPROFILE%\AppData\Local\Google\Chrome\User Data\Default\Bookmarks",
-]
-
-EDGE_BOOKMARK_PATHS = [
-    r"%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Bookmarks",
-    r"%USERPROFILE%\AppData\Local\Microsoft\Edge\User Data\Default\Bookmarks",
-]
-
-BRAVE_BOOKMARK_PATHS = [
-    r"%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Bookmarks",
-    r"%USERPROFILE%\AppData\Local\BraveSoftware\Brave-Browser\User Data\Default\Bookmarks",
-]
+CHROME_BOOKMARK_PATHS = legacy_default_bookmark_paths("chrome")
+EDGE_BOOKMARK_PATHS = legacy_default_bookmark_paths("edge")
+BRAVE_BOOKMARK_PATHS = legacy_default_bookmark_paths("brave")
 
 
 def _find_first_existing(paths: list[str]) -> Path | None:

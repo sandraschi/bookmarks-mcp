@@ -1,7 +1,7 @@
 """Core bookmark management functionality with enhanced safety checks.
 
 DEPRECATED: Individual tools deprecated. Use firefox_bookmarks portmanteau instead.
-- list_bookmarks() ÔåÆ firefox_bookmarks(operation='list_bookmarks')
+- list_bookmarks() → firefox_bookmarks(operation='list_bookmarks')
 """
 
 from pathlib import Path
@@ -12,6 +12,13 @@ from .db import FirefoxDB
 from .exceptions import FirefoxNotClosedError
 from .status import FirefoxStatusChecker
 from .utils import get_profile_directory
+
+_BOOKMARK_SELECT = """
+    SELECT b.id, b.title, p.url, b.dateAdded, b.lastModified, b.parent
+    FROM moz_bookmarks b
+    JOIN moz_places p ON b.fk = p.id
+    WHERE b.type = 1
+"""
 
 
 class BookmarkManager:
@@ -37,19 +44,22 @@ class BookmarkManager:
     def get_bookmarks(self, folder_id: int | None = None) -> list[dict[str, Any]]:
         """Retrieve bookmarks, optionally filtered by folder."""
         db = self._get_db_connection()
-        query = """
-            SELECT b.id, b.title, p.url, b.dateAdded, b.lastModified, b.parent
-            FROM moz_bookmarks b
-            JOIN moz_places p ON b.fk = p.id
-            WHERE b.type = 1
-        """
-        params = []
+        query = _BOOKMARK_SELECT
+        params: list[Any] = []
         if folder_id is not None:
             query += " AND b.parent = ?"
             params.append(folder_id)
 
-        cursor = db.execute(query, params)
+        cursor = db.execute(query, tuple(params))
         return [dict(row) for row in cursor.fetchall()]
+
+    def get_bookmark(self, bookmark_id: int) -> dict[str, Any] | None:
+        """Retrieve a single bookmark by moz_bookmarks id."""
+        db = self._get_db_connection()
+        query = _BOOKMARK_SELECT + " AND b.id = ?"
+        cursor = db.execute(query, (bookmark_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
 
 
 # DEPRECATED: Use firefox_bookmarks(operation='list_bookmarks') instead

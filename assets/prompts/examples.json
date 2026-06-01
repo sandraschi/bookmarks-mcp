@@ -1,0 +1,506 @@
+{
+  "examples": [
+    {
+      "title": "List Chrome bookmarks",
+      "user_input": "Show my Chrome bookmarks",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "list_bookmarks",
+        "browser": "chrome",
+        "limit": 50,
+        "offset": 0
+      },
+      "expected_output": "success with results, pagination.has_more if library is large"
+    },
+    {
+      "title": "List Firefox bookmarks in profile",
+      "user_input": "List bookmarks in Firefox profile dev",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "list_bookmarks",
+        "browser": "firefox",
+        "profile_name": "dev",
+        "limit": 100
+      },
+      "expected_output": "success with bookmarks array and pagination metadata"
+    },
+    {
+      "title": "Search Firefox by keyword",
+      "user_input": "Search Firefox for rust tutorials",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "search_bookmarks",
+        "browser": "firefox",
+        "profile_name": "default",
+        "search_query": "rust tutorial"
+      },
+      "expected_output": "matching bookmarks with total_matches count"
+    },
+    {
+      "title": "Search Edge bookmarks",
+      "user_input": "Find edge bookmarks about MCP",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "search",
+        "browser": "edge",
+        "search_query": "mcp"
+      },
+      "expected_output": "search results from Edge JSON store"
+    },
+    {
+      "title": "Add Chrome bookmark",
+      "user_input": "Bookmark https://fastmcp.dev in Chrome folder Reading",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "add_bookmark",
+        "browser": "chrome",
+        "url": "https://fastmcp.dev",
+        "title": "FastMCP",
+        "folder": "Reading"
+      },
+      "expected_output": "success with created bookmark metadata"
+    },
+    {
+      "title": "Edit Firefox bookmark title",
+      "user_input": "Rename my Firefox bookmark for github.com to GitHub Home",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "edit_bookmark",
+        "browser": "firefox",
+        "profile_name": "default",
+        "url": "https://github.com",
+        "new_title": "GitHub Home"
+      },
+      "expected_output": "success with updated bookmark fields"
+    },
+    {
+      "title": "Delete Brave bookmark",
+      "user_input": "Remove the Brave bookmark for http://localhost:3000",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "delete_bookmark",
+        "browser": "brave",
+        "url": "http://localhost:3000"
+      },
+      "expected_output": "success confirming deletion"
+    },
+    {
+      "title": "Get single bookmark by URL",
+      "user_input": "Get the Chrome bookmark for anthropic.com",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "get_bookmark",
+        "browser": "chrome",
+        "url": "https://www.anthropic.com"
+      },
+      "expected_output": "bookmark record or not-found error"
+    },
+    {
+      "title": "Firefox duplicate detection",
+      "user_input": "Find duplicate bookmarks in Firefox default profile",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "find_duplicates",
+        "browser": "firefox",
+        "profile_name": "default",
+        "similarity_threshold": 0.85
+      },
+      "expected_output": "duplicate groups with similarity scores"
+    },
+    {
+      "title": "Export Firefox bookmarks JSON",
+      "user_input": "Export Firefox default bookmarks to JSON",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "export_bookmarks",
+        "browser": "firefox",
+        "profile_name": "default",
+        "export_format": "json"
+      },
+      "expected_output": "export payload or path with bookmark count"
+    },
+    {
+      "title": "List Firefox tags",
+      "user_input": "What tags exist in my Firefox bookmarks?",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "list_tags",
+        "browser": "firefox",
+        "profile_name": "default"
+      },
+      "expected_output": "tag list with usage counts"
+    },
+    {
+      "title": "Merge similar Firefox tags",
+      "user_input": "Merge similar tags in Firefox profile work",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "merge_tags",
+        "browser": "firefox",
+        "profile_name": "work",
+        "dry_run": true
+      },
+      "expected_output": "preview of tag merges before apply"
+    },
+    {
+      "title": "Find old Firefox bookmarks",
+      "user_input": "Find bookmarks older than a year in Firefox",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "find_old_bookmarks",
+        "browser": "firefox",
+        "profile_name": "default",
+        "age_days": 365
+      },
+      "expected_output": "stale bookmark candidates"
+    },
+    {
+      "title": "Check broken links Firefox",
+      "user_input": "Find broken links in Firefox default profile",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "find_broken_links",
+        "browser": "firefox",
+        "profile_name": "default",
+        "check_links": true,
+        "limit": 200
+      },
+      "expected_output": "URLs failing HTTP checks"
+    },
+    {
+      "title": "Bookmark stats Firefox",
+      "user_input": "Give me bookmark statistics for Firefox",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "get_bookmark_stats",
+        "browser": "firefox",
+        "profile_name": "default"
+      },
+      "expected_output": "counts by folder, tag, age buckets"
+    },
+    {
+      "title": "Sync via browser_bookmarks",
+      "user_input": "Sync Chrome bookmarks into Firefox",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "sync_bookmarks",
+        "browser": "chrome",
+        "target_browser": "firefox",
+        "dry_run": true,
+        "limit": 500
+      },
+      "expected_output": "preview of bookmarks to copy"
+    },
+    {
+      "title": "Dedicated sync dry run",
+      "user_input": "Preview copying Firefox bookmarks to Edge",
+      "tool_call": "sync_bookmarks",
+      "parameters": {
+        "source_browser": "firefox",
+        "target_browser": "edge",
+        "dry_run": true,
+        "limit": 1000
+      },
+      "expected_output": "added/skipped counts without writing"
+    },
+    {
+      "title": "Dedicated sync apply",
+      "user_input": "Copy Firefox bookmarks to Brave for real",
+      "tool_call": "sync_bookmarks",
+      "parameters": {
+        "source_browser": "firefox",
+        "target_browser": "brave",
+        "dry_run": false,
+        "limit": 1000
+      },
+      "expected_output": "success with transferred bookmark count"
+    },
+    {
+      "title": "List Firefox profiles",
+      "user_input": "What Firefox profiles do I have?",
+      "tool_call": "firefox_profiles",
+      "parameters": {
+        "operation": "get_firefox_profiles"
+      },
+      "expected_output": "profile names and paths"
+    },
+    {
+      "title": "Create Firefox profile",
+      "user_input": "Create a Firefox profile named research",
+      "tool_call": "firefox_profiles",
+      "parameters": {
+        "operation": "create_firefox_profile",
+        "profile_name": "research"
+      },
+      "expected_output": "success after Firefox is closed"
+    },
+    {
+      "title": "Suggest portmanteau profiles",
+      "user_input": "Suggest interesting Firefox portmanteau profile combos",
+      "tool_call": "firefox_profiles",
+      "parameters": {
+        "operation": "suggest_portmanteau_profiles"
+      },
+      "expected_output": "preset combination suggestions"
+    },
+    {
+      "title": "Create portmanteau profile",
+      "user_input": "Create Firefox portmanteau profile dev-ai from dev and ai presets",
+      "tool_call": "firefox_profiles",
+      "parameters": {
+        "operation": "create_portmanteau_profile",
+        "profile_name": "dev-ai",
+        "source_profiles": ["developer_tools", "ai_ml"]
+      },
+      "expected_output": "new profile metadata"
+    },
+    {
+      "title": "Check Firefox status",
+      "user_input": "Is Firefox running? Can I write bookmarks?",
+      "tool_call": "firefox_profiles",
+      "parameters": {
+        "operation": "check_firefox_status"
+      },
+      "expected_output": "running/closed status and lock guidance"
+    },
+    {
+      "title": "Tag from folder preview",
+      "user_input": "Preview tagging bookmarks in folder Work/Clients",
+      "tool_call": "firefox_tagging",
+      "parameters": {
+        "operation": "tag_from_folder",
+        "profile_name": "default",
+        "folder_path": "Work/Clients",
+        "tag_prefix": "client",
+        "dry_run": true
+      },
+      "expected_output": "preview tag assignments"
+    },
+    {
+      "title": "Batch tag by year",
+      "user_input": "Tag all 2024 Firefox bookmarks with prefix y2024",
+      "tool_call": "firefox_tagging",
+      "parameters": {
+        "operation": "batch_tag_from_year",
+        "profile_name": "default",
+        "year": 2024,
+        "tag_prefix": "y2024",
+        "batch_size": 100
+      },
+      "expected_output": "batch tagging summary"
+    },
+    {
+      "title": "Backup Firefox bookmarks",
+      "user_input": "Backup Firefox default profile bookmarks",
+      "tool_call": "firefox_backup",
+      "parameters": {
+        "operation": "backup_bookmarks",
+        "profile_name": "default"
+      },
+      "expected_output": "backup path and timestamp"
+    },
+    {
+      "title": "List curated sources",
+      "user_input": "What curated bookmark sources are available?",
+      "tool_call": "firefox_curated",
+      "parameters": {
+        "operation": "list_curated_sources"
+      },
+      "expected_output": "catalog of importable sources"
+    },
+    {
+      "title": "Get curated source detail",
+      "user_input": "Show details for curated source awesome_python",
+      "tool_call": "firefox_curated",
+      "parameters": {
+        "operation": "get_curated_source",
+        "source_name": "awesome_python"
+      },
+      "expected_output": "source metadata and entry count"
+    },
+    {
+      "title": "Firefox utils status",
+      "user_input": "Run a Firefox utility status check",
+      "tool_call": "firefox_utils",
+      "parameters": {
+        "operation": "check_status",
+        "profile_name": "default"
+      },
+      "expected_output": "paths, lock state, helper info"
+    },
+    {
+      "title": "List Chrome profiles",
+      "user_input": "List installed Chrome profiles",
+      "tool_call": "chrome_profiles",
+      "parameters": {
+        "operation": "get_chrome_profiles"
+      },
+      "expected_output": "profile names and directories"
+    },
+    {
+      "title": "Chrome bookmarks DB path",
+      "user_input": "Where is the Chrome Default bookmarks file?",
+      "tool_call": "chrome_profiles",
+      "parameters": {
+        "operation": "get_bookmarks_db_path",
+        "profile_name": "Default"
+      },
+      "expected_output": "absolute path to Bookmarks JSON"
+    },
+    {
+      "title": "AI categorize bookmarks",
+      "user_input": "Auto-categorize my Firefox work bookmarks",
+      "tool_call": "ai_bookmark_portmanteau",
+      "parameters": {
+        "operation": "categorize",
+        "profile_name": "work",
+        "auto_categorize": true
+      },
+      "expected_output": "category assignments per bookmark"
+    },
+    {
+      "title": "AI smart dedupe",
+      "user_input": "Smart dedupe Firefox default bookmarks",
+      "tool_call": "ai_bookmark_portmanteau",
+      "parameters": {
+        "operation": "dedupe",
+        "profile_name": "default",
+        "smart_dedupe": true
+      },
+      "expected_output": "duplicate clusters and merge plan"
+    },
+    {
+      "title": "AI curate from repos",
+      "user_input": "Curate python and ai links from awesome_repos into Firefox",
+      "tool_call": "ai_bookmark_portmanteau",
+      "parameters": {
+        "operation": "curate",
+        "curate_from": "awesome_repos",
+        "topics": ["python", "ai"]
+      },
+      "expected_output": "curated bookmark candidates"
+    },
+    {
+      "title": "AI maintain cleanup",
+      "user_input": "Clean broken links in Firefox work profile",
+      "tool_call": "ai_bookmark_portmanteau",
+      "parameters": {
+        "operation": "maintain",
+        "profile_name": "work",
+        "cleanup_actions": ["broken_links"]
+      },
+      "expected_output": "maintenance actions taken or proposed"
+    },
+    {
+      "title": "AI enhanced export",
+      "user_input": "Export Firefox bookmarks with AI summaries",
+      "tool_call": "ai_bookmark_portmanteau",
+      "parameters": {
+        "operation": "enhanced_export",
+        "profile_name": "default",
+        "export_format": "json"
+      },
+      "expected_output": "enriched export payload"
+    },
+    {
+      "title": "Paginated search Brave",
+      "user_input": "Show page 2 of Brave bookmarks matching docker",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "search_bookmarks",
+        "browser": "brave",
+        "search_query": "docker",
+        "limit": 25,
+        "offset": 25
+      },
+      "expected_output": "second page with pagination metadata"
+    },
+    {
+      "title": "Batch update Firefox tags",
+      "user_input": "Batch update tags on Firefox bookmarks tagged temp",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "batch_update_tags",
+        "browser": "firefox",
+        "profile_name": "default",
+        "tags": ["temp"],
+        "dry_run": true
+      },
+      "expected_output": "preview of tag changes"
+    },
+    {
+      "title": "Forgotten bookmarks Firefox",
+      "user_input": "Find forgotten bookmarks I never visit",
+      "tool_call": "browser_bookmarks",
+      "parameters": {
+        "operation": "find_forgotten_bookmarks",
+        "browser": "firefox",
+        "profile_name": "default",
+        "age_days": 180
+      },
+      "expected_output": "low-engagement bookmark candidates"
+    },
+    {
+      "title": "Chrome running check",
+      "user_input": "Is Chrome running right now?",
+      "tool_call": "chrome_profiles",
+      "parameters": {
+        "operation": "is_chrome_running"
+      },
+      "expected_output": "boolean running state"
+    }
+  ],
+  "manifest_prompts": [
+    {
+      "name": "list_bookmarks_prompt",
+      "template": "List bookmarks from {browser} (profile: {profile_name})",
+      "maps_to": {
+        "tool_call": "browser_bookmarks",
+        "parameters": {
+          "operation": "list_bookmarks",
+          "browser": "{browser}",
+          "profile_name": "{profile_name}"
+        }
+      }
+    },
+    {
+      "name": "search_bookmarks_prompt",
+      "template": "Search {browser} bookmarks for: {search_query}",
+      "maps_to": {
+        "tool_call": "browser_bookmarks",
+        "parameters": {
+          "operation": "search_bookmarks",
+          "browser": "{browser}",
+          "search_query": "{search_query}"
+        }
+      }
+    },
+    {
+      "name": "sync_bookmarks_prompt",
+      "template": "Sync bookmarks from {source_browser} to {target_browser}",
+      "maps_to": {
+        "tool_call": "sync_bookmarks",
+        "parameters": {
+          "source_browser": "{source_browser}",
+          "target_browser": "{target_browser}",
+          "dry_run": true
+        }
+      }
+    }
+  ],
+  "error_handling_examples": [
+    {
+      "error": "Database is locked",
+      "recovery": "Ask user to close Firefox/Chrome, then retry",
+      "tool_hint": "browser_bookmarks with force_access=True (Firefox only)"
+    },
+    {
+      "error": "Unknown operation",
+      "recovery": "Read available_operations from response and pick valid operation literal"
+    },
+    {
+      "error": "sync_bookmarks requires target_browser",
+      "recovery": "Set target_browser parameter explicitly"
+    }
+  ]
+}

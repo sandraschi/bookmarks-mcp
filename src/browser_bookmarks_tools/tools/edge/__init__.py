@@ -1,29 +1,22 @@
-"""Edge bookmark tools."""
+"""Edge bookmark tools — delegates to unified chromium adapter."""
 
-from pathlib import Path
 from typing import Any
 
-from ..chromium_common import (
-    EDGE_BOOKMARK_PATHS,
-    _find_first_existing,
+from ..chromium import (
+    add_chromium_bookmark,
     delete_chromium_bookmark,
     edit_chromium_bookmark,
-    read_chromium_bookmarks,
-    write_chromium_bookmark,
+    list_chromium_bookmarks,
 )
 
+_BROWSER = "edge"
 
-async def list_edge_bookmarks(bookmarks_path: str | None = None) -> dict[str, Any]:
-    """List Microsoft Edge bookmarks.
 
-    Parameters:
-        bookmarks_path: Optional override path to Edge Bookmarks JSON
-
-    Returns:
-        dict: {status, count, bookmarks}
-    """
-    path = _find_first_existing(EDGE_BOOKMARK_PATHS) if not bookmarks_path else Path(bookmarks_path)
-    return read_chromium_bookmarks(path)
+async def list_edge_bookmarks(
+    bookmarks_path: str | None = None,
+    profile_name: str | None = None,
+) -> dict[str, Any]:
+    return await list_chromium_bookmarks(_BROWSER, profile_name=profile_name, bookmarks_path=bookmarks_path)
 
 
 async def add_edge_bookmark(
@@ -31,20 +24,16 @@ async def add_edge_bookmark(
     url: str,
     folder: str | None = None,
     bookmarks_path: str | None = None,
+    profile_name: str | None = None,
 ) -> dict[str, Any]:
-    """Add a bookmark to Edge Bookmarks JSON.
-
-    Parameters:
-        title: Bookmark title
-        url: Bookmark URL
-        folder: Optional target folder name
-        bookmarks_path: Optional override path
-
-    Returns:
-        dict: {status, ...}
-    """
-    path = _find_first_existing(EDGE_BOOKMARK_PATHS) if not bookmarks_path else Path(bookmarks_path)
-    return write_chromium_bookmark(path, title, url, folder)
+    return await add_chromium_bookmark(
+        _BROWSER,
+        title=title,
+        url=url,
+        folder=folder,
+        profile_name=profile_name,
+        bookmarks_path=bookmarks_path,
+    )
 
 
 async def edit_edge_bookmark(
@@ -57,11 +46,10 @@ async def edit_edge_bookmark(
     create_folders: bool = True,
     dry_run: bool = False,
     bookmarks_path: str | None = None,
+    profile_name: str | None = None,
 ) -> dict[str, Any]:
-    """Edit an Edge bookmark by id or url (rename/move)."""
-    path = _find_first_existing(EDGE_BOOKMARK_PATHS) if not bookmarks_path else Path(bookmarks_path)
-    return edit_chromium_bookmark(
-        path,
+    return await edit_chromium_bookmark(
+        _BROWSER,
         id=id,
         url=url,
         new_title=new_title,
@@ -69,6 +57,8 @@ async def edit_edge_bookmark(
         allow_duplicates=allow_duplicates,
         create_folders=create_folders,
         dry_run=dry_run,
+        profile_name=profile_name,
+        bookmarks_path=bookmarks_path,
     )
 
 
@@ -78,11 +68,13 @@ async def delete_edge_bookmark(
     url: str | None = None,
     dry_run: bool = False,
     bookmarks_path: str | None = None,
+    profile_name: str | None = None,
 ) -> dict[str, Any]:
-    """Delete an Edge bookmark by id or url."""
-    path = _find_first_existing(EDGE_BOOKMARK_PATHS) if not bookmarks_path else Path(bookmarks_path)
-    return delete_chromium_bookmark(path, id=id, url=url, dry_run=dry_run)
-
-
-# NOTE: No MCP tool registration - browser_bookmarks portmanteau handles all browsers
-# Functions exported for use by browser_bookmarks portmanteau
+    return await delete_chromium_bookmark(
+        _BROWSER,
+        id=id,
+        url=url,
+        dry_run=dry_run,
+        profile_name=profile_name,
+        bookmarks_path=bookmarks_path,
+    )

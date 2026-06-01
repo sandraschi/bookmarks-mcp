@@ -28,11 +28,26 @@
     }
   },
   "compatibility": {
-    "platforms": ["win32", "linux", "darwin"],
-    "python_version": ">=3.12"
+    "platforms": ["win32", "linux", "darwin"]
   },
   "tools_generated": true,
+  "prompts_generated": true,
   "prompts": [
+    {
+      "name": "system",
+      "description": "System prompt — tool selection, browser rules, safety, transports",
+      "text": "prompts/system.md"
+    },
+    {
+      "name": "user",
+      "description": "User guide — common requests, tips, troubleshooting",
+      "text": "prompts/user.md"
+    },
+    {
+      "name": "examples",
+      "description": "Structured tool-call examples for all portmanteau tools",
+      "text": "prompts/examples.json"
+    },
     {
       "name": "list_bookmarks_prompt",
       "description": "List bookmarks from a browser profile",

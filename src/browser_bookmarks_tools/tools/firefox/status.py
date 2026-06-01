@@ -8,94 +8,24 @@ DEPRECATED: Individual tools deprecated. Use firefox_profiles portmanteau instea
 from pathlib import Path
 from typing import Any
 
-import psutil
-
-# NOTE: @mcp.tool decorators removed - functionality moved to firefox_profiles portmanteau
+from browser_bookmarks_tools.services.browser.gecko_status import GeckoStatusChecker
 
 
 class FirefoxStatusChecker:
-    """Comprehensive Firefox status checking and profile management."""
+    """Comprehensive Gecko status checking (default browser: Firefox)."""
 
     @staticmethod
     def is_firefox_running() -> dict[str, Any]:
-        """Check if Firefox is running with detailed status."""
-        try:
-            firefox_processes = []
-            for proc in psutil.process_iter(["pid", "name", "cmdline"]):
-                try:
-                    if "firefox" in proc.info["name"].lower():
-                        firefox_processes.append(
-                            {
-                                "pid": proc.info["pid"],
-                                "name": proc.info["name"],
-                                "cmdline": proc.info["cmdline"][:3]
-                                if proc.info["cmdline"]
-                                else [],  # First 3 args only
-                            }
-                        )
-                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                    continue
-
-            is_running = len(firefox_processes) > 0
-            return {
-                "is_running": is_running,
-                "process_count": len(firefox_processes),
-                "processes": firefox_processes,
-                "message": (
-                    f"Firefox is {'running' if is_running else 'not running'} ({len(firefox_processes)} processes)"
-                ),
-            }
-        except Exception as e:
-            return {
-                "is_running": False,
-                "error": f"Could not check Firefox status: {e!s}",
-                "message": "Unable to determine Firefox status",
-            }
+        return GeckoStatusChecker.is_browser_running("firefox")
 
     @staticmethod
-    def check_database_access_safe(profile_path: Path | None = None) -> dict[str, Any]:
-        """Check if it's safe to access Firefox databases."""
-        status = FirefoxStatusChecker.is_firefox_running()
+    def is_browser_running(browser_id: str) -> dict[str, Any]:
+        return GeckoStatusChecker.is_browser_running(browser_id)
 
-        if status.get("error"):
-            return {
-                "safe": False,
-                "reason": "status_check_failed",
-                "message": status["message"],
-                "details": status,
-            }
-
-        if status["is_running"]:
-            return {
-                "safe": False,
-                "reason": "firefox_running",
-                "message": (
-                    "Firefox is currently running. Close Firefox before accessing "
-                    "bookmark databases to prevent data corruption."
-                ),
-                "details": status,
-            }
-
-        # Check if profile path exists and is accessible
-        if profile_path:
-            if not profile_path.exists():
-                return {
-                    "safe": False,
-                    "reason": "profile_not_found",
-                    "message": f"Firefox profile not found at: {profile_path}",
-                    "details": {"profile_path": str(profile_path)},
-                }
-
-            places_db = profile_path / "places.sqlite"
-            if not places_db.exists():
-                return {
-                    "safe": False,
-                    "reason": "database_not_found",
-                    "message": f"Firefox places.sqlite database not found at: {places_db}",
-                    "details": {"database_path": str(places_db)},
-                }
-
-        return {"safe": True, "message": "Safe to access Firefox databases", "details": status}
+    @staticmethod
+    def check_database_access_safe(profile_path: Path | None = None, browser_id: str = "firefox") -> dict[str, Any]:
+        """Check if it's safe to access Gecko bookmark databases."""
+        return GeckoStatusChecker.check_database_access_safe(browser_id, profile_path)
 
 
 # DEPRECATED: Use firefox_profiles(operation='check_firefox_status') instead

@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   List,
   MessageSquare,
+  ScrollText,
   Search,
   Settings,
   Tags,
@@ -33,6 +34,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     { href: "/tags", label: "Tags", icon: Tags },
     { href: "/chat", label: "AI Command", icon: MessageSquare },
     { href: "/tools", label: "MCP Tools", icon: Wrench },
+    { href: "/logs", label: "Logs", icon: ScrollText },
     { href: "/help", label: "Help", icon: HelpCircle },
     { href: "/settings", label: "Settings", icon: Settings },
   ];

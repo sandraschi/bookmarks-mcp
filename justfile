@@ -41,6 +41,14 @@ serve:
     $env:BOOKMARKS_WEB_AUTH = '0'
     uv run bookmarks-mcp
 
+# Build lean MCPB bundle (Claude Desktop)
+mcpb-pack build-mcpb:
+    pwsh.exe -NoLogo -File '{{justfile_directory()}}\scripts\build-mcpb.ps1'
+
+# Build Tauri desktop installer (web_sota + sidecar + NSIS)
+build-native:
+    pwsh.exe -NoLogo -File '{{justfile_directory()}}\native\build.ps1'
+
 # Dev: backend + Vite (run in two terminals; this starts backend only)
 dev-backend:
     just serve

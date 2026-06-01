@@ -20,6 +20,7 @@ async def list_bookmarks(
     folder_id: int | None = None,
     limit: int = 50,
     offset: int = 0,
+    browser_id: str = "firefox",
 ) -> dict[str, Any]:
     """List bookmarks with optional folder filtering.
 
@@ -32,11 +33,13 @@ async def list_bookmarks(
     Returns:
         Dictionary with bookmarks and metadata
     """
-    places_db = get_places_db_path(profile_name)
+    places_db = get_places_db_path(profile_name, browser_id)
     if not places_db or not places_db.exists():
         return {
             "status": "error",
-            "message": (f"Could not find Firefox bookmarks database for profile: {profile_name or 'default'}"),
+            "message": (
+                f"Could not find bookmarks database for {browser_id} profile: {profile_name or 'default'}"
+            ),
         }
 
     try:
@@ -204,6 +207,7 @@ async def add_bookmark(
     tags: list[str] | None = None,
     description: str | None = None,
     profile_name: str | None = None,
+    browser_id: str = "firefox",
 ) -> dict[str, Any]:
     """Add a new bookmark to Firefox.
 
@@ -218,11 +222,13 @@ async def add_bookmark(
     Returns:
         Dictionary with status and bookmark ID if successful
     """
-    places_db = get_places_db_path(profile_name)
+    places_db = get_places_db_path(profile_name, browser_id)
     if not places_db or not places_db.exists():
         return {
             "status": "error",
-            "message": (f"Could not find Firefox bookmarks database for profile: {profile_name or 'default'}"),
+            "message": (
+                f"Could not find bookmarks database for {browser_id} profile: {profile_name or 'default'}"
+            ),
         }
 
     try:

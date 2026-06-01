@@ -10,6 +10,7 @@ import { BulkOpsPage } from "@/pages/bulk-ops";
 import { Chat } from "@/pages/chat";
 import { Dashboard } from "@/pages/dashboard";
 import { Help } from "@/pages/help";
+import { LogsPage } from "@/pages/logs";
 import { SearchPage } from "@/pages/search";
 import { Settings } from "@/pages/settings";
 import { TagsPage } from "@/pages/tags";
@@ -29,6 +30,7 @@ function App() {
           <Route path="/tags" element={<TagsPage />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/tools" element={<Tools />} />
+          <Route path="/logs" element={<LogsPage />} />
           <Route path="/help" element={<Help />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />

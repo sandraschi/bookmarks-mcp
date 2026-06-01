@@ -53,3 +53,28 @@ def test_tool_call_logs_activity(client: TestClient):
     )
     entries = client.get("/api/activity").json()["entries"]
     assert any(entry["kind"] == "tool_call" for entry in entries)
+
+
+def test_logs_query_and_export(client: TestClient):
+    client.post(
+        "/api/tools/call",
+        json={
+            "name": "browser_bookmarks",
+            "arguments": {"operation": "list_bookmarks", "browser": "chrome", "limit": 1},
+        },
+    )
+    logs = client.get("/api/logs?limit=10&kind=tool_call").json()
+    assert logs["total"] >= 1
+    assert "level" in logs["entries"][0]
+
+    stats = client.get("/api/logs/stats").json()
+    assert stats["max_entries"] >= 100
+    assert "by_level" in stats
+
+    export = client.get("/api/logs/export?format=json&kind=tool_call")
+    assert export.status_code == 200
+    assert "application/json" in export.headers.get("content-type", "")
+
+    cleared = client.delete("/api/logs")
+    assert cleared.status_code == 200
+    assert client.get("/api/logs/stats").json()["total"] == 1

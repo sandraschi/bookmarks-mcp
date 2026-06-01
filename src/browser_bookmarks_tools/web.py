@@ -4,12 +4,25 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Request
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from browser_bookmarks_tools.activity_log import clear_activity, get_activity, log_activity
+from browser_bookmarks_tools.activity_log import (
+    SortOrder,
+    clear_logs,
+    export_logs,
+    get_activity,
+    install_log_handler,
+    log_activity,
+    log_stats,
+    query_logs,
+)
 from browser_bookmarks_tools.auth import authenticate
+from browser_bookmarks_tools.services.browser.safari_registry import is_safari_browser, list_safari_browsers
+from browser_bookmarks_tools.services.browser.gecko_paths import resolve_places_db_path
+from browser_bookmarks_tools.services.browser.gecko_registry import is_gecko_browser, list_gecko_browsers
+from browser_bookmarks_tools.tools.chromium import is_chromium_browser, list_chromium_browsers
 
 current_dir = Path(__file__).parent
 project_root = current_dir.parent.parent
@@ -90,25 +103,18 @@ def _chromium_node_to_tree(node: dict[str, Any], parent_path: str = "") -> dict[
     return None
 
 
-def _read_chromium_tree(browser: str) -> dict[str, Any]:
-    from browser_bookmarks_tools.tools.chromium_common import (
-        BRAVE_BOOKMARK_PATHS,
-        CHROME_BOOKMARK_PATHS,
-        EDGE_BOOKMARK_PATHS,
-        _find_first_existing,
-    )
+def _read_chromium_tree(browser: str, profile_name: str | None = None) -> dict[str, Any]:
+    from browser_bookmarks_tools.tools.chromium import resolve_bookmarks_path
 
-    paths = {
-        "chrome": CHROME_BOOKMARK_PATHS,
-        "edge": EDGE_BOOKMARK_PATHS,
-        "brave": BRAVE_BOOKMARK_PATHS,
-    }.get(browser.lower())
-    if not paths:
+    if not is_chromium_browser(browser):
         return {"success": False, "error": f"Unsupported browser for tree: {browser}"}
 
-    path = _find_first_existing(paths)
-    if not path or not path.exists():
-        return {"success": False, "error": f"Bookmarks file not found for {browser}"}
+    path = resolve_bookmarks_path(browser, profile_name)
+    if path is None or not path.exists():
+        return {
+            "success": False,
+            "error": f"Bookmarks file not found for {browser} profile {profile_name or 'Default'}",
+        }
 
     data = json.loads(path.read_text(encoding="utf-8"))
     roots = data.get("roots", {})
@@ -120,19 +126,73 @@ def _read_chromium_tree(browser: str) -> dict[str, Any]:
         mapped = _chromium_node_to_tree(root_node, root_key)
         if mapped:
             tree.append(mapped)
-    return {"success": True, "browser": browser, "tree": tree}
+    return {
+        "success": True,
+        "browser": browser,
+        "profile_name": profile_name or "Default",
+        "tree": tree,
+    }
 
 
-def _read_firefox_tree(profile_name: str | None) -> dict[str, Any]:
-    from browser_bookmarks_tools.tools.firefox.utils import get_places_db_path
+def _read_safari_tree(bookmarks_path: str | None = None) -> dict[str, Any]:
+    from browser_bookmarks_tools.services.browser.safari_plist import read_safari_bookmarks
 
-    places_db = get_places_db_path(profile_name)
+    path = Path(bookmarks_path) if bookmarks_path else None
+    result = read_safari_bookmarks(path)
+    if result.get("status") != "success":
+        return {"success": False, "error": result.get("error"), "browser": "safari"}
+
+    tree: list[dict[str, Any]] = []
+
+    def walk(node: dict[str, Any], parent_path: str = "") -> dict[str, Any] | None:
+        if node.get("WebBookmarkType") == "WebBookmarkTypeLeaf":
+            uri = node.get("URIDictionary") or {}
+            return {
+                "type": "bookmark",
+                "title": uri.get("title") or uri.get("URLString") or "(untitled)",
+                "url": uri.get("URLString"),
+            }
+        if node.get("WebBookmarkType") == "WebBookmarkTypeList":
+            name = node.get("Title") or "Folder"
+            path = f"{parent_path}/{name}" if parent_path else name
+            children = []
+            for child in node.get("Children") or []:
+                if isinstance(child, dict):
+                    mapped = walk(child, path)
+                    if mapped:
+                        children.append(mapped)
+            return {"type": "folder", "name": name, "path": path, "children": children}
+        return None
+
+    with Path(result["bookmarks_path"]).open("rb") as handle:
+        import plistlib
+
+        data = plistlib.load(handle)
+
+    for child in (data.get("Children") if isinstance(data, dict) else []) or []:
+        if isinstance(child, dict):
+            mapped = walk(child)
+            if mapped:
+                tree.append(mapped)
+
+    return {"success": True, "browser": "safari", "profile_name": "default", "tree": tree}
+
+
+def _read_gecko_tree(browser: str, profile_name: str | None) -> dict[str, Any]:
+    places_db = resolve_places_db_path(browser, profile_name)
     if not places_db or not places_db.exists():
         return {
             "success": False,
-            "error": f"Firefox places DB not found for profile: {profile_name or 'default'}",
+            "error": f"places DB not found for {browser} profile: {profile_name or 'default'}",
         }
+    return _read_firefox_tree_from_db(places_db, browser, profile_name)
 
+
+def _read_firefox_tree_from_db(
+    places_db: Path,
+    browser: str = "firefox",
+    profile_name: str | None = None,
+) -> dict[str, Any]:
     conn = sqlite3.connect(f"file:{places_db}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -196,13 +256,18 @@ def _read_firefox_tree(profile_name: str | None) -> dict[str, Any]:
         tree = [build_folder(row["id"]) for row in rows if row["type"] == 2 and row["id"] == 1]
         tree = [t for t in tree if t]
 
-    return {"success": True, "browser": "firefox", "profile_name": profile_name, "tree": tree}
+    return {"success": True, "browser": browser, "profile_name": profile_name, "tree": tree}
+
+
+def _read_firefox_tree(profile_name: str | None) -> dict[str, Any]:
+    return _read_gecko_tree("firefox", profile_name)
 
 
 router = APIRouter(prefix="/api", dependencies=[Depends(authenticate)])
 
 
 def setup_webapp(app, mcp_app=None) -> None:
+    install_log_handler()
     if mcp_app:
 
         @router.get("/health")
@@ -232,11 +297,17 @@ def setup_webapp(app, mcp_app=None) -> None:
                 log_activity(
                     "tool_call",
                     f"{request.name} ({'error' if is_error else 'ok'})",
+                    level="ERROR" if is_error else "INFO",
                     meta={"tool": request.name, "arguments": request.arguments},
                 )
                 return {"result": payload, "isError": is_error}
             except Exception as exc:
-                log_activity("tool_call", f"{request.name} (exception)", meta={"error": str(exc)})
+                log_activity(
+                    "tool_call",
+                    f"{request.name} (exception)",
+                    level="ERROR",
+                    meta={"error": str(exc)},
+                )
                 return {"result": {"success": False, "error": str(exc)}, "isError": True}
 
         @router.post("/tools/{tool_name}")
@@ -247,16 +318,30 @@ def setup_webapp(app, mcp_app=None) -> None:
             except Exception as exc:
                 return {"error": str(exc)}
 
+        @router.get("/browsers/safari")
+        async def safari_browsers():
+            return {"browsers": list_safari_browsers()}
+
+        @router.get("/browsers/gecko")
+        async def gecko_browsers():
+            return {"browsers": list_gecko_browsers()}
+
+        @router.get("/browsers/chromium")
+        async def chromium_browsers():
+            return {"browsers": list_chromium_browsers()}
+
         @router.get("/bookmarks/tree")
         async def bookmark_tree(
             browser: str = Query(...),
             profile_name: str | None = Query(None),
         ):
             browser_lower = browser.lower()
-            if browser_lower in ("chrome", "edge", "brave"):
-                return _read_chromium_tree(browser_lower)
-            if browser_lower == "firefox":
-                return _read_firefox_tree(profile_name)
+            if is_gecko_browser(browser_lower):
+                return _read_gecko_tree(browser_lower, profile_name)
+            if is_chromium_browser(browser_lower):
+                return _read_chromium_tree(browser_lower, profile_name)
+            if is_safari_browser(browser_lower):
+                return _read_safari_tree()
             return {"success": False, "error": f"Unsupported browser: {browser}"}
 
         @router.get("/activity")
@@ -265,24 +350,94 @@ def setup_webapp(app, mcp_app=None) -> None:
 
         @router.delete("/activity")
         async def activity_clear():
-            clear_activity()
+            clear_logs()
+            return {"success": True}
+
+        @router.get("/logs")
+        async def logs_query(
+            limit: int = Query(50, ge=1, le=500),
+            offset: int = Query(0, ge=0),
+            level: str | None = Query(None),
+            kind: str | None = Query(None),
+            search: str | None = Query(None),
+            sort: str = Query("desc"),
+            after_id: str | None = Query(None),
+        ):
+            order: SortOrder = "asc" if sort == "asc" else "desc"
+            return query_logs(
+                limit=limit,
+                offset=offset,
+                level=level,
+                kind=kind,
+                search=search,
+                sort=order,
+                after_id=after_id,
+            )
+
+        @router.get("/logs/stats")
+        async def logs_stats():
+            return log_stats()
+
+        @router.get("/logs/export")
+        async def logs_export(
+            format: str = Query("json"),
+            level: str | None = Query(None),
+            kind: str | None = Query(None),
+            search: str | None = Query(None),
+            sort: str = Query("desc"),
+        ):
+            order: SortOrder = "asc" if sort == "asc" else "desc"
+            if format not in ("json", "csv"):
+                format = "json"
+            body, media_type, filename = export_logs(
+                format=format,
+                level=level,
+                kind=kind,
+                search=search,
+                sort=order,
+            )
+            return Response(
+                content=body,
+                media_type=media_type,
+                headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+            )
+
+        @router.delete("/logs")
+        async def logs_clear():
+            clear_logs()
+            log_activity("system", "Log buffer cleared", level="WARNING")
             return {"success": True}
 
         @router.post("/bookmarks/export")
         async def export_bookmarks_download(request: ExportRequest):
             browser_lower = request.browser.lower()
-            if browser_lower == "firefox":
+            if is_gecko_browser(browser_lower):
                 result = await mcp_app.call_tool(
                     "browser_bookmarks",
                     {
                         "operation": "export_bookmarks",
-                        "browser": "firefox",
+                        "browser": browser_lower,
                         "profile_name": request.profile_name,
                         "export_format": request.export_format,
                     },
                 )
                 payload = _serialize_tool_result(result)
-                log_activity("export", f"firefox {request.export_format}")
+                log_activity("export", f"{browser_lower} {request.export_format}")
+                return {"result": payload}
+
+            if is_safari_browser(browser_lower) or is_chromium_browser(browser_lower):
+                result = await mcp_app.call_tool(
+                    "browser_bookmarks",
+                    {
+                        "operation": "export_bookmarks",
+                        "browser": browser_lower,
+                        "profile_name": request.profile_name,
+                        "export_format": request.export_format,
+                        "limit": request.limit,
+                    },
+                )
+                payload = _serialize_tool_result(result)
+                log_activity("export", f"{browser_lower} {request.export_format}")
                 return {"result": payload}
 
             list_result = await mcp_app.call_tool(
@@ -290,6 +445,7 @@ def setup_webapp(app, mcp_app=None) -> None:
                 {
                     "operation": "list_bookmarks",
                     "browser": browser_lower,
+                    "profile_name": request.profile_name,
                     "limit": request.limit,
                 },
             )
