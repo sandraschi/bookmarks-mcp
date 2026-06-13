@@ -16,6 +16,8 @@ for pkg in (
     datas += copy_metadata(pkg)
 
 hiddenimports = [
+    "_strptime",
+    "_datetime",
     "uvicorn.logging",
     "uvicorn.loops",
     "uvicorn.loops.asyncio",
@@ -66,7 +68,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=True,

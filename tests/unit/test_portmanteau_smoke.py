@@ -20,6 +20,9 @@ async def test_multi_portmanteau_tools_registered():
         "sync_bookmarks",
         "chrome_profiles",
         "ai_bookmark_portmanteau",
+        "bookmark_metadata",
+        "backup_restore",
+        "browse_bookmarks_ui",
     }
     missing = expected - names
     assert not missing, f"Missing tools: {missing}; got {sorted(names)}"

@@ -60,4 +60,6 @@ BrowserBookmarkOperation = Literal[
     "refresh_bookmarks",
     "get_bookmark_stats",
     "find_broken_links",
+    "import_bookmarks",
+    "import_html",
 ]

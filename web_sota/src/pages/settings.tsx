@@ -1,10 +1,8 @@
 import { Cpu, RefreshCw, Save, Shield } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   getHealth,
-  getLlmSettings,
   getStoredAuth,
-  setLlmSettings,
   setStoredAuth,
 } from "@/common/api";
 import { useBookmarkSettings } from "@/common/bookmark-settings";
@@ -27,6 +25,48 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+function LLMSettings() {
+    const [providers, setProviders] = useState<Record<string, {name:string}[]>>({});
+    const [selectedProvider, setSelectedProvider] = useState("ollama");
+    const [selectedModel, setSelectedModel] = useState("");
+    useEffect(() => {
+        fetch("/api/llm/providers").then(r => r.json()).then(d => {
+            setProviders(d);
+            const savedP = localStorage.getItem("llm_provider") || "ollama";
+            const savedM = localStorage.getItem("llm_model") || "";
+            setSelectedProvider(savedP);
+            const models = d[savedP === "ollama" ? "ollama" : "lm_studio"] || [];
+            setSelectedModel(savedM && models.some((m:{name:string}) => m.name === savedM) ? savedM : (models[0]?.name || ""));
+        }).catch(() => {
+            setProviders({ ollama: [{name:"llama3.2:3b"}] });
+            setSelectedModel(localStorage.getItem("llm_model") || "llama3.2:3b");
+        });
+    }, []);
+    const save = (p:string, m:string) => { localStorage.setItem("llm_provider", p); localStorage.setItem("llm_model", m); };
+    const models = providers[selectedProvider === "ollama" ? "ollama" : "lm_studio"] || [];
+    return (
+        <div className="space-y-3">
+            <Select value={selectedProvider} onValueChange={(v) => { setSelectedProvider(v); save(v, ""); }}>
+                <SelectTrigger className="bg-slate-900 border-slate-800 text-slate-100">
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-slate-800 text-slate-100">
+                    <SelectItem value="ollama">Ollama</SelectItem>
+                    <SelectItem value="lm_studio">LM Studio</SelectItem>
+                </SelectContent>
+            </Select>
+            <Select value={selectedModel} onValueChange={(v) => { setSelectedModel(v); save(selectedProvider, v); }}>
+                <SelectTrigger className="bg-slate-900 border-slate-800 text-slate-100">
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-slate-800 text-slate-100">
+                    {models.map((m) => <SelectItem key={m.name} value={m.name}>{m.name}</SelectItem>)}
+                </SelectContent>
+            </Select>
+        </div>
+    );
+}
+
 export function Settings() {
   const {
     browser,
@@ -36,9 +76,6 @@ export function Settings() {
     setProfileName,
     setForceAccess,
   } = useBookmarkSettings();
-  const [provider, setProvider] = useState(() => getLlmSettings().provider);
-  const [model, setModel] = useState(() => getLlmSettings().model);
-  const [endpoint, setEndpoint] = useState(() => getLlmSettings().endpoint);
   const [webUser, setWebUser] = useState(() => getStoredAuth()?.username ?? "");
   const [webPass, setWebPass] = useState(() => getStoredAuth()?.password ?? "");
   const [apiStatus, setApiStatus] = useState<string | null>(null);
@@ -188,45 +225,8 @@ export function Settings() {
             Used by AI Command page
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-2">
-            <Label className="text-slate-300">Provider</Label>
-            <Select value={provider} onValueChange={setProvider}>
-              <SelectTrigger className="bg-slate-900 border-slate-800 text-slate-100">
-                <SelectValue placeholder="Select provider" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-800 text-slate-100">
-                <SelectItem value="ollama">Ollama (Default)</SelectItem>
-                <SelectItem value="lmstudio">LM Studio</SelectItem>
-                <SelectItem value="openai">OpenAI Compatible</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2">
-            <Label className="text-slate-300">API Endpoint</Label>
-            <Input
-              value={endpoint}
-              onChange={(e) => setEndpoint(e.target.value)}
-              className="bg-slate-900 border-slate-800 text-slate-100"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label className="text-slate-300">Model</Label>
-            <Input
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              className="bg-slate-900 border-slate-800 text-slate-100"
-            />
-          </div>
-          <Button
-            onClick={() => {
-              setLlmSettings({ provider, model, endpoint });
-              setApiStatus("LLM settings saved");
-            }}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Save className="mr-2 h-4 w-4" /> Save LLM settings
-          </Button>
+        <CardContent>
+          <LLMSettings />
         </CardContent>
       </Card>
 

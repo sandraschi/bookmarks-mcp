@@ -214,7 +214,7 @@ dependencies = [
     { name = "aiosqlite" },
     { name = "beautifulsoup4" },
     { name = "fastapi" },
-    { name = "fastmcp" },
+    { name = "fastmcp", extra = ["apps"] },
     { name = "httpx" },
     { name = "prefab-ui" },
     { name = "psutil" },
@@ -236,7 +236,7 @@ requires-dist = [
     { name = "aiosqlite", specifier = ">=0.20" },
     { name = "beautifulsoup4", specifier = ">=4.12.0" },
     { name = "fastapi", specifier = ">=0.115.0" },
-    { name = "fastmcp", specifier = ">=3.3.0" },
+    { name = "fastmcp", extras = ["apps"], specifier = ">=3.3.0" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "prefab-ui", specifier = ">=0.18.0" },
     { name = "psutil", specifier = ">=5.9.0" },
@@ -587,6 +587,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/9f/11/6b1bdada6ccfe647d615ae63f9106f8136aec17971e9361546af01c7d38e/fastmcp-3.3.1-py3-none-any.whl", hash = "sha256:862440c5c4d281363a5995eee59d77f0f7cac1f18869038729cecf03b02fc522", size = 7903, upload-time = "2026-05-15T15:50:36.424Z" },
 ]
 
+[package.optional-dependencies]
+apps = [
+    { name = "fastmcp-slim", extra = ["apps"] },
+]
+
 [[package]]
 name = "fastmcp-slim"
 version = "3.3.1"
@@ -605,6 +610,9 @@ wheels = [
 ]
 
 [package.optional-dependencies]
+apps = [
+    { name = "prefab-ui" },
+]
 client = [
     { name = "authlib" },
     { name = "exceptiongroup" },

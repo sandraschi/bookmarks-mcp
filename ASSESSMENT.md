@@ -9,7 +9,7 @@
 
 ## Executive summary
 
-bookmarks-mcp is a **FastMCP 3.3 multi-portmanteau server** with a strong **Firefox-first** implementation (~35 modules under `tools/firefox/`) and a thinner **Chromium JSON layer** shared by Chrome, Edge, and Brave. The universal entry point `browser_bookmarks` works, but **feature parity is heavily skewed toward Firefox**. Documentation and changelog still claim **Safari (plist) support**, which **does not exist in source**.
+bookmarks-mcp is a **FastMCP 3.3 multi-portmanteau server** with a strong **Firefox-first** implementation (~35 modules under `tools/firefox/`) and **registry-driven Chromium, Gecko, and Safari adapters**. The universal entry point `browser_bookmarks` routes by browser family; advanced ops (duplicates, export, stats, broken links, age) work across Chromium + Safari + Gecko reads. Tag automation remains Gecko-only.
 
 The highest-value path to “all browsers in general use” is **not** N separate copy-paste modules (chrome/, edge/, brave/ today). It is:
 
@@ -19,6 +19,20 @@ The highest-value path to “all browsers in general use” is **not** N separat
 4. **Wire `BaseBrowserManager` / `ChromeManager` into `browser_bookmarks`** instead of parallel thin wrappers.
 
 Estimated effort to cover **~90% of desktop users**: **2–3 weeks** focused refactor + tests. Full feature parity across families: **6–8 weeks**.
+
+---
+
+## Implementation status (2026-06-01)
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| **1 — Chromium unification** | Done | `chromium_registry.py` (10 ids incl. comet, dia), `ChromiumManager`, unified `tools/chromium.py`, `profile_name` |
+| **2 — Gecko fork registry** | Done | `gecko_registry.py` (firefox, zen, librewolf, waterfox, floorp, tor), parameterized paths + status |
+| **3 — Safari adapter** | Done | `safari_plist.py`, `tools/safari.py`, macOS gate + explicit-path tests on Windows |
+| **4 — Feature lift** | Done | `universal_bookmark_ops.py`, `bookmark_loader.py`, folder-aware `sync_tree.py` |
+| **5 — Interchange + sidecar metadata** | Done | HTML/JSON import, `bookmark_metadata` sidecar SQLite, `docs/MOBILE_IMPORT.md` |
+
+**Tests**: 30 unit tests (registry, safari plist, universal ops, sync dry-run, chromium fixture). Web API tests require a FastAPI/Starlette-compatible venv.
 
 ---
 
@@ -46,7 +60,7 @@ Smoke test (`tests/unit/test_portmanteau_smoke.py`) confirms all nine tools regi
 |--------|------------------------|---------|-------------------|
 | **Gecko** | `firefox` | `places.sqlite` | Must close browser (optional `force_access` read bypass) |
 | **Chromium JSON** | `chrome`, `edge`, `brave` | `User Data/<Profile>/Bookmarks` | File rewrite; browser open is risky |
-| **Safari plist** | *none* | — | — |
+| **Safari plist** | `safari` | `~/Library/Safari/Bookmarks.plist` | macOS only; Full Disk Access may be required |
 
 ### Non-MCP deliverables
 
@@ -269,10 +283,13 @@ Reuse existing `tools/firefox/*` by parameterizing profile resolution (`get_plac
 
 Promote **backup/restore** to `chromium_profiles` portmanteau (mirror `firefox_backup`).
 
-### Phase 5 — Interchange & mobile (~1 week, optional)
+### Phase 5 — Interchange, mobile, sidecar metadata (done)
 
-- **Import**: Netscape HTML, Chrome/Firefox JSON export files (path override — no live browser required).
-- **Samsung Internet / mobile**: document export-to-HTML workflow; optional `import_html` operation.
+- **Import**: Netscape HTML, Chrome/Firefox JSON via `import_bookmarks` / `import_html` (`import_path`, no live browser required for parsing)
+- **Mobile**: `docs/MOBILE_IMPORT.md` — Samsung Internet / iOS export → import workflow
+- **Sidecar SQLite** (`~/.bookmarks-mcp/metadata.db`): description, tags, starred (0–5), read_count, last_read_at, user_comment — keyed by `(url, browser, profile_name)` with global fallback
+- **Tool**: `bookmark_metadata` (get/set/list/record_read/import_metadata/sidecar_info)
+- **Merge**: `include_metadata=True` on `browser_bookmarks` list/search/get
 
 ---
 

@@ -49,6 +49,11 @@ async def browser_bookmarks(
     target_browser: str | None = None,
     target_profile: str | None = None,
     preserve_folders: bool = True,
+    # Import parameters (Phase 5)
+    import_path: str | None = None,
+    import_format: str = "auto",
+    import_to_metadata: bool = False,
+    include_metadata: bool = False,
     # Firefox lock bypass
     force_access: bool = False,
 ) -> dict[str, Any]:
@@ -57,7 +62,9 @@ async def browser_bookmarks(
     Browsers: gecko registry + chromium registry + safari (macOS plist).
     Core CRUD/search: chromium + safari. Advanced ops (duplicates, export, stats, broken links, age):
     all families except gecko-only tag operations.
-    For full docs call help_system.
+    import_bookmarks/import_html: load Netscape HTML or Chrome/Firefox JSON exports (import_path).
+    include_metadata: merge sidecar description/tags/stars/read stats into list/search/get results.
+    Sidecar metadata: use bookmark_metadata tool (~/.bookmarks-mcp/metadata.db).
 
     Parameter guidance:
     - profile_name: Gecko profile name, or Chromium profile folder (Default, Profile 1, …).
@@ -95,6 +102,46 @@ async def browser_bookmarks(
                 "total_count": total,
             },
         }
+
+    def _maybe_enrich(result: dict[str, Any], *, browser_id: str, profile: str | None) -> dict[str, Any]:
+        if not include_metadata or not result.get("success"):
+            return result
+        from browser_bookmarks_tools.services.metadata.enrich import enrich_bookmarks
+
+        for key in ("bookmarks", "results"):
+            items = result.get(key)
+            if isinstance(items, list):
+                result[key] = enrich_bookmarks(items, browser=browser_id, profile_name=profile)
+        if isinstance(result.get("bookmark"), dict):
+            from browser_bookmarks_tools.services.metadata.enrich import enrich_bookmark
+            from browser_bookmarks_tools.services.metadata.sidecar_db import SidecarMetadataStore
+
+            url = result["bookmark"].get("url")
+            if url:
+                meta = SidecarMetadataStore().get(url, browser=browser_id, profile_name=profile)
+                result["bookmark"] = enrich_bookmark(result["bookmark"], meta)
+        return result
+
+    if operation in ("import_bookmarks", "import_html"):
+        if not import_path:
+            return {
+                "success": False,
+                "operation": operation,
+                "error": "import_path is required for import operations",
+            }
+        from browser_bookmarks_tools.tools.bookmark_import_ops import import_bookmarks_from_file
+
+        fmt = "netscape_html" if operation == "import_html" else import_format
+        return await import_bookmarks_from_file(
+            import_path=import_path,
+            import_format=fmt,
+            target_browser=browser if browser.lower() != "import" else target_browser,
+            target_profile=target_profile or profile_name,
+            import_to_metadata=import_to_metadata,
+            preserve_folders=preserve_folders,
+            dry_run=dry_run,
+            limit=limit,
+        )
 
     # Special handling for sync_bookmarks (cross-browser operation)
     if operation == "sync_bookmarks":
@@ -150,7 +197,7 @@ async def browser_bookmarks(
                 page_info = _paginate(items)
                 result[key] = items[offset : offset + limit]
                 result.update(page_info)
-        return result
+        return _maybe_enrich(result, browser_id=browser_lower, profile=profile_name)
 
     # Chromium-family browsers — registry-driven unified adapter
     from browser_bookmarks_tools.tools.chromium import (
@@ -191,7 +238,7 @@ async def browser_bookmarks(
                 page_info = _paginate(result["bookmarks"])
                 result["bookmarks"] = result["bookmarks"][offset : offset + limit]
                 result.update(page_info)
-            return result
+            return _maybe_enrich(result, browser_id=browser_lower, profile=profile)
 
         if operation == "add_bookmark":
             if not url or not title:
@@ -284,7 +331,7 @@ async def browser_bookmarks(
                 page_info = _paginate(result["results"])
                 result["results"] = result["results"][offset : offset + limit]
                 result.update(page_info)
-            return result
+            return _maybe_enrich(result, browser_id=browser_lower, profile=profile)
 
         if operation == "get_bookmark":
             if not bookmark_id and not url:
@@ -296,12 +343,13 @@ async def browser_bookmarks(
                     "operation": operation,
                     "error": "get_bookmark requires 'bookmark_id' or 'url' parameter",
                 }
-            return await get_chromium_bookmark(
+            result = await get_chromium_bookmark(
                 browser_lower,
                 bookmark_id=bookmark_id,
                 url=url,
                 profile_name=profile,
             )
+            return _maybe_enrich(result, browser_id=browser_lower, profile=profile)
 
         return {
             "success": False,
@@ -351,7 +399,7 @@ async def browser_bookmarks(
                 page_info = _paginate(result["bookmarks"])
                 result["bookmarks"] = result["bookmarks"][offset : offset + limit]
                 result.update(page_info)
-            return result
+            return _maybe_enrich(result, browser_id=browser_lower, profile=profile)
 
         if operation == "add_bookmark":
             if not url or not title:
@@ -386,10 +434,11 @@ async def browser_bookmarks(
                 page_info = _paginate(result["results"])
                 result["results"] = result["results"][offset : offset + limit]
                 result.update(page_info)
-            return result
+            return _maybe_enrich(result, browser_id="safari", profile=profile_name)
 
         if operation == "get_bookmark":
-            return await get_safari_bookmark(bookmark_id=bookmark_id, url=url)
+            result = await get_safari_bookmark(bookmark_id=bookmark_id, url=url)
+            return _maybe_enrich(result, browser_id="safari", profile=profile_name)
 
         return {
             "success": False,

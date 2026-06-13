@@ -8,18 +8,21 @@
     "beforeDevCommand": "npm --prefix ../web_sota run dev"
   },
   "app": {
-    "windows": [{
-      "title": "Bookmark Master",
-      "width": 1280,
-      "height": 800,
-      "minWidth": 900,
-      "minHeight": 600
-    }],
-    "security": { "csp": null }
+    "windows": [
+      {
+        "title": "Bookmark Master",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
   },
   "bundle": {
     "active": true,
-    "targets": "all",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -27,11 +30,30 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": ["binaries/bookmarks-mcp-backend"]
+    "externalBin": [
+      "binaries/bookmarks-mcp-backend"
+    ],
+    "targets": [
+      "nsis"
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "skip"
+      },
+      "nsis": {
+        "installerHooks": "./windows/hooks.nsh"
+      }
+    }
   },
   "plugins": {
-    "shell": { "open": true },
-    "fs": { "requireLiteralLeadingDot": false },
-    "process": { "all": true }
+    "shell": {
+      "open": true
+    },
+    "fs": {
+      "requireLiteralLeadingDot": false
+    },
+    "process": {
+      "all": true
+    }
   }
 }
