@@ -126,7 +126,7 @@ class SidecarMetadataStore:
                 global_rows = conn.execute(
                     f"""
                     SELECT * FROM bookmark_metadata
-                    WHERE url IN ({','.join('?' for _ in missing)})
+                    WHERE url IN ({",".join("?" for _ in missing)})
                       AND browser = '' AND profile_name = ''
                     """,
                     missing,

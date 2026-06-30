@@ -210,7 +210,6 @@ async def browser_bookmarks(
         search_chromium_bookmarks,
         supported_chromium_operations,
     )
-
     from browser_bookmarks_tools.tools.universal_bookmark_ops import (
         UNIVERSAL_ADVANCED_OPERATIONS,
         execute_universal_operation,

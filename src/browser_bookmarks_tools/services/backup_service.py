@@ -8,12 +8,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from browser_bookmarks_tools.services.browser.chromium_manager import ChromiumManager
 from browser_bookmarks_tools.services.browser.chromium_registry import (
     is_chromium_browser,
     list_chromium_browser_ids,
 )
-from browser_bookmarks_tools.services.browser.gecko_paths import resolve_profile_directory
-from browser_bookmarks_tools.services.browser.gecko_paths import parse_profiles_ini
+from browser_bookmarks_tools.services.browser.gecko_paths import parse_profiles_ini, resolve_profile_directory
 from browser_bookmarks_tools.services.browser.gecko_registry import (
     is_gecko_browser,
     list_gecko_browser_ids,
@@ -23,7 +23,6 @@ from browser_bookmarks_tools.services.browser.safari_registry import (
     resolve_safari_bookmarks_plist,
     safari_supported_on_platform,
 )
-from browser_bookmarks_tools.services.browser.chromium_manager import ChromiumManager
 
 
 def default_backup_root() -> Path:

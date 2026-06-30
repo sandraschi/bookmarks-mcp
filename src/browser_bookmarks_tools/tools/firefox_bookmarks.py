@@ -59,8 +59,7 @@ def _check_gecko_for_write(browser_id: str, operation: str) -> dict[str, Any] | 
             "browser_status": status,
             "solution": f"Please close {spec.display_name} completely and try again",
             "details": (
-                f"{spec.display_name} locks places.sqlite while running. "
-                "Write operations require exclusive access."
+                f"{spec.display_name} locks places.sqlite while running. Write operations require exclusive access."
             ),
             "hint_for_mcp_client": f"Tell the user to close {spec.display_name} before proceeding",
         }

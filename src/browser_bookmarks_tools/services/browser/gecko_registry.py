@@ -95,7 +95,9 @@ def _build_specs() -> dict[str, GeckoBrowserSpec]:
             install_root_candidates=_platform_paths(
                 [rf"{local}\Tor Browser\Browser\TorBrowser\Data\Browser\profile.default"],
                 [f"{home}/Library/Application Support/TorBrowser-Data/Browser/profile.default"],
-                [f"{home}/.local/share/torbrowser/tbb/x86_64/tor-browser/Browser/TorBrowser/Data/Browser/profile.default"],
+                [
+                    f"{home}/.local/share/torbrowser/tbb/x86_64/tor-browser/Browser/TorBrowser/Data/Browser/profile.default"
+                ],
             ),
             process_names=frozenset({"firefox.exe", "tor.exe", "tor browser", "Tor Browser"}),
             profile_layout=GeckoProfileLayout.SINGLE_PROFILE,
@@ -129,9 +131,7 @@ def get_gecko_spec(browser_id: str) -> GeckoBrowserSpec:
     key = browser_id.lower().strip()
     spec = GECKO_BROWSER_SPECS.get(key)
     if spec is None:
-        raise ValueError(
-            f"Unknown Gecko browser: {browser_id}. Supported: {', '.join(list_gecko_browser_ids())}"
-        )
+        raise ValueError(f"Unknown Gecko browser: {browser_id}. Supported: {', '.join(list_gecko_browser_ids())}")
     return spec
 
 

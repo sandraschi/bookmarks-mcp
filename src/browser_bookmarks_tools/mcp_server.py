@@ -50,9 +50,18 @@ def _build_web_app():
 
     app = FastAPI(title="bookmarks-mcp")
 
+    _bookmarks_tauri = os.environ.get("BOOKMARKS_TAURI", "").lower() in ("1", "true", "yes")
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=[
+            "http://127.0.0.1:10803",
+            "http://localhost:10803",
+            "http://goliath:10803",
+            "http://tauri.localhost",
+            "https://tauri.localhost",
+            "tauri://localhost",
+        ],
+        allow_origin_regex=r"https?://tauri\.localhost(:\d+)?" if _bookmarks_tauri else None,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -62,6 +71,24 @@ def _build_web_app():
     async def health():
 
         return {"status": "ok", "server": "bookmarks-mcp"}
+
+    @app.get("/api/v1/diagnostics")
+    async def diagnostics():
+        try:
+            import psutil
+
+            cpu = psutil.cpu_percent()
+            mem = psutil.virtual_memory().percent
+            disk = psutil.disk_usage("/").percent
+        except ImportError:
+            cpu = mem = disk = None
+        return {
+            "success": True,
+            "backend": {"port": 10803, "status": "running"},
+            "system": {"cpu_percent": cpu, "memory_percent": mem, "disk_percent": disk},
+            "tools": {"total": 0},
+            "cua_status": {"tesseract_available": False, "window_found": False},
+        }
 
     setup_webapp(app, mcp_app=mcp)
 

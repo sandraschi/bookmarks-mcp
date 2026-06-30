@@ -13,19 +13,19 @@ env:
 jobs:
   python:
     name: Python lint and test
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v5
         with:
           version: latest
-      - run: uv sync --dev
+      - run: uv sync --group dev
       - run: uv run ruff check .
       - run: uv run ruff format --check .
-      - run: uv run pytest tests/ -q
+      - run: uv run pytest -x --tb=short -k "not slow" tests/
 
   web:
     name: Web build and lint

@@ -37,8 +37,7 @@ class GeckoStatusChecker:
                 "process_count": len(matches),
                 "processes": matches,
                 "message": (
-                    f"{spec.display_name} is {'running' if is_running else 'not running'} "
-                    f"({len(matches)} processes)"
+                    f"{spec.display_name} is {'running' if is_running else 'not running'} ({len(matches)} processes)"
                 ),
             }
         except Exception as exc:

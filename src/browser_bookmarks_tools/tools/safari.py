@@ -82,7 +82,9 @@ async def delete_safari_bookmark_op(
     return _normalize(result, operation="delete_bookmark")
 
 
-async def search_safari_bookmarks(search_query: str, bookmarks_path: str | None = None, limit: int = 100) -> dict[str, Any]:
+async def search_safari_bookmarks(
+    search_query: str, bookmarks_path: str | None = None, limit: int = 100
+) -> dict[str, Any]:
     listed = await list_safari_bookmarks(bookmarks_path)
     if not listed.get("success"):
         listed["operation"] = "search_bookmarks"

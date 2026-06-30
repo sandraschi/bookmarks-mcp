@@ -37,9 +37,7 @@ async def list_bookmarks(
     if not places_db or not places_db.exists():
         return {
             "status": "error",
-            "message": (
-                f"Could not find bookmarks database for {browser_id} profile: {profile_name or 'default'}"
-            ),
+            "message": (f"Could not find bookmarks database for {browser_id} profile: {profile_name or 'default'}"),
         }
 
     try:
@@ -226,9 +224,7 @@ async def add_bookmark(
     if not places_db or not places_db.exists():
         return {
             "status": "error",
-            "message": (
-                f"Could not find bookmarks database for {browser_id} profile: {profile_name or 'default'}"
-            ),
+            "message": (f"Could not find bookmarks database for {browser_id} profile: {profile_name or 'default'}"),
         }
 
     try:

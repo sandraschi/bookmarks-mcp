@@ -8,7 +8,11 @@ from typing import Any
 
 from browser_bookmarks_tools.services.browser.gecko_paths import (
     get_profiles_ini_path as _get_profiles_ini_path,
+)
+from browser_bookmarks_tools.services.browser.gecko_paths import (
     parse_profiles_ini as _parse_profiles_ini,
+)
+from browser_bookmarks_tools.services.browser.gecko_paths import (
     resolve_places_db_path,
     resolve_profile_directory,
 )

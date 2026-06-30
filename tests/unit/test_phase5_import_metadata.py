@@ -3,7 +3,6 @@ from pathlib import Path
 from browser_bookmarks_tools.services.bookmark_import import parse_bookmark_file, parse_netscape_html
 from browser_bookmarks_tools.services.metadata.sidecar_db import SidecarMetadataStore
 
-
 FIXTURES = Path(__file__).resolve().parent.parent / "fixtures"
 
 

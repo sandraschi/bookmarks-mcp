@@ -165,10 +165,7 @@ def get_chromium_spec(browser_id: str) -> ChromiumBrowserSpec:
     key = browser_id.lower().strip()
     spec = CHROMIUM_BROWSER_SPECS.get(key)
     if spec is None:
-        raise ValueError(
-            f"Unknown Chromium browser: {browser_id}. "
-            f"Supported: {', '.join(list_chromium_browser_ids())}"
-        )
+        raise ValueError(f"Unknown Chromium browser: {browser_id}. Supported: {', '.join(list_chromium_browser_ids())}")
     return spec
 
 

@@ -27,9 +27,7 @@ def find_duplicates_from_bookmarks(
         by_url.setdefault(url, []).append(bookmark)
 
     duplicates = [
-        {"url": url, "count": len(items), "bookmarks": items}
-        for url, items in by_url.items()
-        if len(items) > 1
+        {"url": url, "count": len(items), "bookmarks": items} for url, items in by_url.items() if len(items) > 1
     ]
     return {
         "success": True,
@@ -93,7 +91,7 @@ def export_bookmarks_to_file(
 ) -> dict[str, Any]:
     fmt = export_format.lower()
     timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
-    default_name = f"bookmarks_{timestamp}.{ 'html' if fmt == 'netscape' else fmt }"
+    default_name = f"bookmarks_{timestamp}.{'html' if fmt == 'netscape' else fmt}"
     output_path = Path(export_path or default_name)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 

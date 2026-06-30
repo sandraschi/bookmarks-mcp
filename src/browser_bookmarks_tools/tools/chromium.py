@@ -177,8 +177,7 @@ async def search_chromium_bookmarks(
     matches = [
         bookmark
         for bookmark in bookmarks
-        if query_lower in str(bookmark.get("title", "")).lower()
-        or query_lower in str(bookmark.get("url", "")).lower()
+        if query_lower in str(bookmark.get("title", "")).lower() or query_lower in str(bookmark.get("url", "")).lower()
     ]
     return {
         "success": True,
