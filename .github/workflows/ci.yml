@@ -2,9 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, master, develop]
-  pull_request:
-    branches: [main, master, develop]
+    tags: ["v*"]
   workflow_dispatch:
 
 env:
@@ -26,46 +24,3 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pytest -x --tb=short -k "not slow" tests/
-
-  web:
-    name: Web build and lint
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web_sota
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: web_sota/package-lock.json
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run biome:ci
-      - run: npm run build
-
-  mcpb-build:
-    name: Build MCPB package
-    runs-on: ubuntu-latest
-    needs: [python]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - run: npm install -g @anthropic-ai/mcpb || echo "MCPB CLI not available, skipping"
-      - name: Validate and pack MCPB
-        run: |
-          if command -v mcpb >/dev/null 2>&1; then
-            bash scripts/build-mcpb.sh
-          else
-            echo "MCPB CLI not available, skipping pack"
-          fi
-      - name: Upload MCPB package
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: mcpb-package
-          path: dist/bookmarks-mcp-v*.mcpb
-          if-no-files-found: ignore

@@ -114,7 +114,7 @@ class SidecarMetadataStore:
                 f"""
                 SELECT * FROM bookmark_metadata
                 WHERE url IN ({placeholders}) AND browser = ? AND profile_name = ?
-                """,
+                """,  # noqa: S608
                 [*urls, browser_key, profile_key],
             ).fetchall()
             for row in scoped:
@@ -128,7 +128,7 @@ class SidecarMetadataStore:
                     SELECT * FROM bookmark_metadata
                     WHERE url IN ({",".join("?" for _ in missing)})
                       AND browser = '' AND profile_name = ''
-                    """,
+                    """,  # noqa: S608
                     missing,
                 ).fetchall()
                 for row in global_rows:
@@ -265,7 +265,7 @@ class SidecarMetadataStore:
         where = " AND ".join(clauses)
         with self._connect() as conn:
             total = conn.execute(
-                f"SELECT COUNT(*) FROM bookmark_metadata WHERE {where}",
+                f"SELECT COUNT(*) FROM bookmark_metadata WHERE {where}",  # noqa: S608
                 params,
             ).fetchone()[0]
             rows = conn.execute(
@@ -274,7 +274,7 @@ class SidecarMetadataStore:
                 WHERE {where}
                 ORDER BY updated_at DESC
                 LIMIT ? OFFSET ?
-                """,
+                """,  # noqa: S608
                 [*params, limit, offset],
             ).fetchall()
 

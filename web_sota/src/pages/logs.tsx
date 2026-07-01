@@ -11,11 +11,12 @@ import {
   clearLogs,
   downloadLogsExport,
   getLogStats,
-  queryLogs,
   type LogEntry,
   type LogQueryParams,
   type LogStats,
+  queryLogs,
 } from "@/common/api";
+import { cn } from "@/common/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,7 +35,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { cn } from "@/common/utils";
 
 const LEVELS = ["", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] as const;
 const KINDS = ["", "tool_call", "export", "server", "system"] as const;
@@ -42,10 +42,13 @@ const PAGE_SIZES = [25, 50, 100, 200] as const;
 
 function levelTone(level: string): string {
   const l = level.toUpperCase();
-  if (l === "ERROR" || l === "CRITICAL") return "text-rose-400 bg-rose-500/10 border-rose-500/30";
-  if (l === "WARNING") return "text-amber-400 bg-amber-500/10 border-amber-500/30";
+  if (l === "ERROR" || l === "CRITICAL")
+    return "text-rose-400 bg-rose-500/10 border-rose-500/30";
+  if (l === "WARNING")
+    return "text-amber-400 bg-amber-500/10 border-amber-500/30";
   if (l === "INFO") return "text-sky-400 bg-sky-500/10 border-sky-500/30";
-  if (l === "DEBUG") return "text-slate-400 bg-slate-500/10 border-slate-500/30";
+  if (l === "DEBUG")
+    return "text-slate-400 bg-slate-500/10 border-slate-500/30";
   return "text-slate-400 bg-slate-800/50 border-slate-700";
 }
 
@@ -155,7 +158,7 @@ export function LogsPage() {
     const el = streamRef.current;
     if (!el || !autoScroll || userScrolledRef.current) return;
     el.scrollTop = sort === "desc" ? 0 : el.scrollHeight;
-  }, [entries, autoScroll, sort]);
+  }, [autoScroll, sort]);
 
   const onStreamScroll = () => {
     const el = streamRef.current;
@@ -256,7 +259,9 @@ export function LogsPage() {
                 <p className="text-xs uppercase tracking-wide text-slate-500">
                   {item.label}
                 </p>
-                <p className="text-2xl font-semibold text-white">{item.value}</p>
+                <p className="text-2xl font-semibold text-white">
+                  {item.value}
+                </p>
               </CardContent>
             </Card>
           ))}
@@ -427,8 +432,8 @@ export function LogsPage() {
           <div>
             <CardTitle className="text-base text-white">Log stream</CardTitle>
             <CardDescription className="text-xs text-slate-500">
-              {total.toLocaleString()} matching · max {maxEntries.toLocaleString()}{" "}
-              retained
+              {total.toLocaleString()} matching · max{" "}
+              {maxEntries.toLocaleString()} retained
               {liveTail && page === 0 && (
                 <span className="ml-2 text-emerald-400">● tail active</span>
               )}
@@ -449,7 +454,9 @@ export function LogsPage() {
             {loading && entries.length === 0 ? (
               <p className="p-6 text-slate-500">Loading logs…</p>
             ) : entries.length === 0 ? (
-              <p className="p-6 text-slate-500">No entries match your filters.</p>
+              <p className="p-6 text-slate-500">
+                No entries match your filters.
+              </p>
             ) : (
               entries.map((entry) => (
                 <div
