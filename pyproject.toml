@@ -12,7 +12,7 @@ license = { text = "MIT" }
 requires-python = ">=3.12"
 keywords = ["mcp", "bookmarks", "browser", "firefox", "chrome", "edge", "brave"]
 dependencies = [
-  "fastmcp[apps]>=3.3.0",
+  "fastmcp[apps]>=3.4.2,<4",
   "prefab-ui>=0.18.0",
   "pydantic>=2.7",
   "aiohttp>=3.9",
