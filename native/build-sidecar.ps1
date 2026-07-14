@@ -27,17 +27,23 @@ try {
 
     $triple = "x86_64-pc-windows-msvc"
     $src = "$Root\dist\bookmarks-mcp-backend.exe"
-    $dstDir = "$Root\native\binaries"
-    $dst = "$dstDir\bookmarks-mcp-backend-$triple.exe"
 
     if (-not (Test-Path $src)) { throw "Build output not found: $src" }
 
-    New-Item -ItemType Directory -Path $dstDir -Force | Out-Null
-    Copy-Item $src $dst -Force
+    # Release bundle (embedded in Tauri resources)
+    $resDir = "$Root\native\resources"
+    New-Item -ItemType Directory -Path $resDir -Force | Out-Null
+    Copy-Item $src "$resDir\bookmarks-mcp-backend.exe" -Force
 
-    $sizeMB = [math]::Round((Get-Item $dst).Length / 1MB, 1)
+    # Dev fallback (binaries/ with triple suffix for tauri dev)
+    $devDir = "$Root\native\binaries"
+    New-Item -ItemType Directory -Path $devDir -Force | Out-Null
+    $devDst = "$devDir\bookmarks-mcp-backend-$triple.exe"
+    Copy-Item $src $devDst -Force
+
+    $sizeMB = [math]::Round((Get-Item $src).Length / 1MB, 1)
     Write-Host "=== Sidecar ready ===" -ForegroundColor Green
-    Write-Host "  $dst ($sizeMB MB)" -ForegroundColor Cyan
+    Write-Host "  $resDir\bookmarks-mcp-backend.exe ($sizeMB MB)" -ForegroundColor Cyan
 } finally {
     Pop-Location
 }

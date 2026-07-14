@@ -15,12 +15,15 @@ export function Topbar() {
 
       <div className="flex items-center gap-2">
         {/* System Status Indicator */}
-        <div className="mr-4 flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-500 border border-emerald-500/20">
+        <div
+          data-testid="connection-status"
+          className="mr-4 flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-500 border border-emerald-500/20"
+        >
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
           </span>
-          System Online
+          <span data-testid="connection-label">System Online</span>
         </div>
 
         {/* Global Apps Navigation */}

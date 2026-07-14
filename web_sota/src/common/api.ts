@@ -98,7 +98,7 @@ export interface AiChatResponse {
   tool_calls?: string[];
 }
 
-const API = "/api";
+const API = import.meta.env.VITE_API_URL ?? "/api";
 const AUTH_KEY = "bookmarks-web-auth";
 const LLM_KEY = "bookmarks-llm-settings";
 
@@ -171,6 +171,13 @@ export async function getHealth(): Promise<HealthResponse> {
   return r.json();
 }
 
+export async function getLlmProviders(): Promise<
+  Record<string, { name: string }[]>
+> {
+  const r = await apiFetch("/llm/providers");
+  return r.json();
+}
+
 export async function getTools(): Promise<ToolsResponse> {
   const r = await apiFetch("/tools");
   if (!r.ok) throw new Error(`Tools list failed: ${r.status}`);
@@ -222,7 +229,9 @@ function buildLogParams(params: LogQueryParams): string {
   return q.toString();
 }
 
-export async function queryLogs(params: LogQueryParams = {}): Promise<LogsQueryResponse> {
+export async function queryLogs(
+  params: LogQueryParams = {},
+): Promise<LogsQueryResponse> {
   const qs = buildLogParams(params);
   const r = await apiFetch(`/logs${qs ? `?${qs}` : ""}`);
   if (!r.ok) throw new Error(`Logs query failed: ${r.status}`);

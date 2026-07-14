@@ -1,4 +1,5 @@
-﻿set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+import 'scripts/just/fleet.just'
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 
@@ -49,6 +50,10 @@ mcpb-pack build-mcpb:
 build-native:
     pwsh.exe -NoLogo -File '{{justfile_directory()}}\native\build.ps1'
 
+# Run CUA smoke test against installed NSIS app
+cua-nsis-test:
+    C:\Windows\py.exe scripts/cua-smoke.py
+
 # Dev: backend + Vite (run in two terminals; this starts backend only)
 dev-backend:
     just serve
@@ -64,4 +69,3 @@ check-sec:
 audit-deps:
     Set-Location '{{justfile_directory()}}'
     uv run safety check
-

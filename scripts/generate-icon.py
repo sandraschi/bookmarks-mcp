@@ -1,4 +1,5 @@
 """Generate a simple 512x512 PNG app icon."""
+
 import struct
 import zlib
 from pathlib import Path

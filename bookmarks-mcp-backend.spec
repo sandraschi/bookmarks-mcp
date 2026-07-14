@@ -16,7 +16,7 @@ for pkg in (
     datas += copy_metadata(pkg)
 
 hiddenimports = [
-    "_strptime",
+
     "_datetime",
     "uvicorn.logging",
     "uvicorn.loops",
@@ -41,19 +41,22 @@ hiddenimports = [
     "browser_bookmarks_tools.transport",
     "browser_bookmarks_tools.web",
     "browser_bookmarks_tools.ai",
+    "_strptime",
 ]
 
 a = Analysis(
     ["run_server.py"],
     pathex=["src"],
     binaries=[],
+    
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],
+    
     hooksconfig={},
     runtime_hooks=[],
     excludes=["torch", "transformers", "tensorflow"],
-    noarchive=False,
+    noarchive=True,
     optimize=0,
 )
 pyz = PYZ(a.pure)
@@ -64,6 +67,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
+    
     name="bookmarks-mcp-backend",
     debug=False,
     bootloader_ignore_signals=False,
@@ -78,3 +82,8 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
 )
+
+
+
+
+
