@@ -1,0 +1,60 @@
+{
+  "manifest_version": "0.2",
+  "name": "bookmarks-mcp",
+  "version": "0.2.0",
+  "description": "FastMCP 3.3 MCP server — multi-portmanteau browser bookmark management",
+  "author": { "name": "Sandra Schi" },
+  "server": {
+    "type": "python",
+    "entry_point": "run_server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run","--directory","${PWD}","run_server.py"],
+      "env": {
+        "PYTHONPATH": "${PWD}/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  },
+  "tools": [
+    { "name": "health", "description": "health" },
+    { "name": "main_stdio", "description": "main(stdio)" },
+    { "name": "main_http", "description": "main(http)" },
+    { "name": "main_sse", "description": "main(sse)" },
+    { "name": "api_health", "description": "api_health" },
+    { "name": "api_status", "description": "api_status" },
+    { "name": "list_tools", "description": "list_tools" },
+    { "name": "call_tool_endpoint", "description": "call_tool_endpoint" },
+    { "name": "execute_tool_legacy", "description": "execute_tool_legacy" },
+    { "name": "safari_browsers", "description": "safari_browsers" },
+    { "name": "gecko_browsers", "description": "gecko_browsers" },
+    { "name": "chromium_browsers", "description": "chromium_browsers" },
+    { "name": "bookmark_tree", "description": "bookmark_tree" },
+    { "name": "activity_feed", "description": "activity_feed" },
+    { "name": "activity_clear", "description": "activity_clear" },
+    { "name": "logs_query", "description": "logs_query" },
+    { "name": "logs_stats", "description": "logs_stats" },
+    { "name": "logs_export", "description": "logs_export" },
+    { "name": "logs_clear", "description": "logs_clear" },
+    { "name": "export_bookmarks_download", "description": "export_bookmarks_download" },
+    { "name": "backup_restore", "description": "backup_restore" },
+    { "name": "bookmark_metadata", "description": "bookmark_metadata" },
+    { "name": "browser_bookmarks", "description": "browser_bookmarks" },
+    { "name": "chrome_profiles", "description": "chrome_profiles" },
+    { "name": "firefox_backup", "description": "firefox_backup" },
+    { "name": "firefox_bookmarks", "description": "firefox_bookmarks" },
+    { "name": "firefox_curated", "description": "firefox_curated" },
+    { "name": "firefox_profiles", "description": "firefox_profiles" },
+    { "name": "firefox_tagging", "description": "firefox_tagging" },
+    { "name": "firefox_utils", "description": "firefox_utils" },
+    { "name": "browse_bookmarks_ui", "description": "browse_bookmarks_ui" },
+    { "name": "bookmark_stats_ui", "description": "bookmark_stats_ui" },
+    { "name": "import_preview_ui", "description": "import_preview_ui" },
+    { "name": "metadata_browser_ui", "description": "metadata_browser_ui" },
+    { "name": "sync_preview_ui", "description": "sync_preview_ui" },
+    { "name": "backup_manager_ui", "description": "backup_manager_ui" },
+    { "name": "import_execute_ui", "description": "import_execute_ui" },
+    { "name": "sync_bookmarks", "description": "sync_bookmarks" },
+    { "name": "ai_bookmark_portmanteau", "description": "ai_bookmark_portmanteau" }
+  ]
+}

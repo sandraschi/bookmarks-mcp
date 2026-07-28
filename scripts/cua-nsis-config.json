@@ -1,0 +1,13 @@
+{
+    "product_name": "Bookmarks MCP",
+    "install_dir": "%LOCALAPPDATA%\\Bookmarks MCP",
+    "operator_exe": "bookmarks-mcp-native.exe",
+    "backend_process_names": ["bookmarks-mcp-native", "bookmarks-mcp-native-backend"],
+    "backend_port": 10803,
+    "health_path": "/api/v1/health",
+    "diagnostics_path": "/api/v1/diagnostics",
+    "feature_smoke_path": "/api/v1/diagnostics",
+    "window_title_re": "Bookmarks MCP",
+    "nsis_glob": "native/target/release/bundle/nsis/Bookmarks MCP_*_x64-setup.exe",
+    "uninstall_registry_filter": "*Bookmarks MCP*"
+}
