@@ -1,18 +1,18 @@
-[build-system]
+﻿[build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
 name = "bookmarks-mcp"
 version = "0.2.0"
-description = "FastMCP 3.3 MCP server — multi-portmanteau browser bookmark management"
-authors = [{ name = "Sandra Schi" }]
+description = "FastMCP 3.3 MCP server â€” multi-portmanteau browser bookmark management"
+authors = [{ name = "Sandra Schipal"}]
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.12"
 keywords = ["mcp", "bookmarks", "browser", "firefox", "chrome", "edge", "brave"]
 dependencies = [
-  "fastmcp[apps]>=3.4.2,<4",
+  "fastmcp[apps]>=3.4.4,<4",
   "prefab-ui>=0.18.0",
   "pydantic>=2.7",
   "aiohttp>=3.9",
@@ -34,6 +34,7 @@ dev = [
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.6.1",
   "pytest>=8",
   "pytest-asyncio>=0.24",
   "ruff>=0.14.0",
@@ -66,3 +67,4 @@ ignore = ["S101", "B008", "S110", "S112"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
