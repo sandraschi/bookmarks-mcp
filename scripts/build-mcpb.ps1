@@ -157,7 +157,7 @@ if (-not (Test-Path $OutputFile)) { throw "MCPB output missing: $OutputFile" }
 
 $sizeMB = [math]::Round((Get-Item $OutputFile).Length / 1MB, 2)
 if ($sizeMB -gt $MaxSizeMB) {
-    throw "MCPB bundle is ${sizeMB} MB (limit ${MaxSizeMB} MB) — check staging excludes"
+    throw "MCPB bundle is ${sizeMB} MB (limit ${MaxSizeMB} MB) - check staging excludes"
 }
 
 Write-Host "=== MCPB ready ===" -ForegroundColor Green
