@@ -34,7 +34,7 @@
     ],
     "resources": [
       "resources/bookmarks-mcp-backend.exe",
-            "resources/.env"
+            "resources/.env.example"
     ],
     "targets": [
       "nsis"
@@ -61,6 +61,7 @@
     }
   }
 }
+
 
 
 
