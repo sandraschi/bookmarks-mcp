@@ -27,3 +27,7 @@ _dashboard/
 
 # MCPB staging
 mcpb-build/
+
+# Runtime logs
+*.log
+
