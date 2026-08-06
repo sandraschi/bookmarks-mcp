@@ -31,3 +31,4 @@ mcpb-build/
 # Runtime logs
 *.log
 
+*.bak*

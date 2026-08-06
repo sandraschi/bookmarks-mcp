@@ -1,13 +1,62 @@
 {
-    "product_name": "Bookmarks MCP",
-    "install_dir": "%LOCALAPPDATA%\\Bookmarks MCP",
-    "operator_exe": "bookmarks-mcp-native.exe",
-    "backend_process_names": ["bookmarks-mcp-native", "bookmarks-mcp-native-backend"],
-    "backend_port": 10803,
-    "health_path": "/api/v1/health",
-    "diagnostics_path": "/api/v1/diagnostics",
-    "feature_smoke_path": "/api/v1/diagnostics",
-    "window_title_re": "Bookmarks MCP",
-    "nsis_glob": "native/target/release/bundle/nsis/Bookmarks MCP_*_x64-setup.exe",
-    "uninstall_registry_filter": "*Bookmarks MCP*"
+  "product_name": "Bookmarks MCP",
+  "install_dir": "%LOCALAPPDATA%\\Bookmarks MCP",
+  "operator_exe": "bookmarks-mcp-native.exe",
+  "backend_process_names": [
+    "bookmarks-mcp-native",
+    "bookmarks-mcp-native-backend"
+  ],
+  "backend_port": 10803,
+  "health_path": "/api/v1/health",
+  "diagnostics_path": "/api/v1/diagnostics",
+  "feature_smoke_path": "/api/v1/diagnostics",
+  "window_title_re": "Bookmarks MCP",
+  "nsis_glob": "native/target/release/bundle/nsis/Bookmarks MCP_*_x64-setup.exe",
+  "uninstall_registry_filter": "*Bookmarks MCP*",
+  "nav_routes": [
+    [
+      "Overview",
+      "Overview"
+    ],
+    [
+      "Bookmarks",
+      "Bookmarks"
+    ],
+    [
+      "Search",
+      "Search"
+    ],
+    [
+      "Tree",
+      "Tree"
+    ],
+    [
+      "Bulk Ops",
+      "Bulk Ops"
+    ],
+    [
+      "Tags",
+      "Tags"
+    ],
+    [
+      "AI Command",
+      "AI Command"
+    ],
+    [
+      "MCP Tools",
+      "MCP Tools"
+    ],
+    [
+      "Logs",
+      "Logs"
+    ],
+    [
+      "Help",
+      "Help"
+    ],
+    [
+      "Settings",
+      "Settings"
+    ]
+  ]
 }
