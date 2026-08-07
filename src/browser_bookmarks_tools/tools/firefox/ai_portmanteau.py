@@ -692,10 +692,6 @@ async def ai_bookmark_portmanteau(
     - generate_portmanteau: Create intelligent bookmark combinations
     - maintain: AI-powered cleanup and maintenance
     - export: Enhanced export with AI summaries
-    - recommend: AI-powered bookmark recommendations
-    - analyze: Deep analysis of bookmark collections
-    - evolve: Learn and evolve profiles over time
-    - score: Quality assessment of profiles
 
     Args:
         operation: The operation to perform (required)
@@ -794,34 +790,38 @@ async def ai_bookmark_portmanteau(
 
     elif operation == "recommend":
         return {
-            "status": "success",
+            "status": "error",
+            "error_type": "not_implemented",
             "operation": "recommend",
-            "message": "Recommendation system coming soon",
-            "note": "This will analyze usage patterns and suggest new bookmarks",
+            "message": "The recommend operation is not implemented yet",
+            "suggestions": ["Use categorize or maintain instead"],
         }
 
     elif operation == "analyze":
         return {
-            "status": "success",
+            "status": "error",
+            "error_type": "not_implemented",
             "operation": "analyze",
-            "message": "Analysis system coming soon",
-            "note": "This will provide deep insights into bookmark collections",
+            "message": "The analyze operation is not implemented yet",
+            "suggestions": ["Use export with include_ai_summaries=True for insights"],
         }
 
     elif operation == "evolve":
         return {
-            "status": "success",
+            "status": "error",
+            "error_type": "not_implemented",
             "operation": "evolve",
-            "message": "Evolution system coming soon",
-            "note": "This will learn from usage and suggest profile improvements",
+            "message": "The evolve operation is not implemented yet",
+            "suggestions": ["Use maintain for cleanup workflows"],
         }
 
     elif operation == "score":
         return {
-            "status": "success",
+            "status": "error",
+            "error_type": "not_implemented",
             "operation": "score",
-            "message": "Scoring system coming soon",
-            "note": "This will assess profile quality and coherence",
+            "message": "The score operation is not implemented yet",
+            "suggestions": ["Use analyze-style tooling when available"],
         }
 
     else:
@@ -835,9 +835,6 @@ async def ai_bookmark_portmanteau(
                 "curate",
                 "maintain",
                 "export",
-                "recommend",
-                "analyze",
-                "evolve",
                 "score",
             ],
         }
