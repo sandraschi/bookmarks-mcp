@@ -29,7 +29,7 @@ Add the following to your `~/.cursor/mcp.json`:
       "command": "python",
       "args": ["-m", "browser_bookmarks_tools"],
       "env": {
-        "PYTHONPATH": "C:\\Dev\\repos\\bookmarks-mcp\\src",
+        "PYTHONPATH": "D:\\Dev\\repos\\bookmarks-mcp\\src",
         "PYTHONUNBUFFERED": "1"
       }
     }
