@@ -1,9 +1,5 @@
-import os
-
 import pytest
 from fastapi.testclient import TestClient
-
-os.environ.setdefault("BOOKMARKS_WEB_AUTH", "0")
 
 from browser_bookmarks_tools.mcp_server import web_app
 

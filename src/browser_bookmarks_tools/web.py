@@ -3,7 +3,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -18,7 +18,6 @@ from browser_bookmarks_tools.activity_log import (
     log_stats,
     query_logs,
 )
-from browser_bookmarks_tools.auth import authenticate
 from browser_bookmarks_tools.services.browser.gecko_paths import resolve_places_db_path
 from browser_bookmarks_tools.services.browser.gecko_registry import is_gecko_browser, list_gecko_browsers
 from browser_bookmarks_tools.services.browser.safari_registry import is_safari_browser, list_safari_browsers
@@ -263,7 +262,7 @@ def _read_firefox_tree(profile_name: str | None) -> dict[str, Any]:
     return _read_gecko_tree("firefox", profile_name)
 
 
-router = APIRouter(prefix="/api", dependencies=[Depends(authenticate)])
+router = APIRouter(prefix="/api")
 
 
 def setup_webapp(app, mcp_app=None) -> None:

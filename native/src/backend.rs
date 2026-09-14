@@ -56,7 +56,10 @@ pub fn materialize_backend(app: &AppHandle) -> Result<PathBuf, String> {
     }
     let bundled = resolve_bundled_backend(app)?;
     log_line(app, &format!("using bundled backend: {}", bundled.display()));
-    Ok(bundled)
+    // Strip Windows extended-length prefix
+    let s = bundled.to_string_lossy().to_string();
+    let clean = s.strip_prefix("\\\\?\\").map(PathBuf::from).unwrap_or(bundled.clone());
+    Ok(clean)
 }
 
 fn free_port(port: u16) {
@@ -86,7 +89,6 @@ pub fn spawn_backend(app: AppHandle, state: &BackendProcess) -> Result<String, S
     command.current_dir(&workdir)
         .env("PORT", BACKEND_PORT.to_string())
         .env("MCP_PORT", BACKEND_PORT.to_string())
-        .env("BOOKMARKS_WEB_AUTH", "0")
         .env("BOOKMARKS_TAURI", "1")
         .stdout(Stdio::piped()).stderr(Stdio::piped());
     #[cfg(windows)] {

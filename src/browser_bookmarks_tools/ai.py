@@ -1,10 +1,8 @@
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from browser_bookmarks_tools.auth import authenticate
-
-router = APIRouter(prefix="/api/ai", tags=["ai"], dependencies=[Depends(authenticate)])
+router = APIRouter(prefix="/api/ai", tags=["ai"])
 
 
 class ChatRequest(BaseModel):
