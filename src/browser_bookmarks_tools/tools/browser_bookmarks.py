@@ -113,13 +113,17 @@ async def browser_bookmarks(
             if isinstance(items, list):
                 result[key] = enrich_bookmarks(items, browser=browser_id, profile_name=profile)
         if isinstance(result.get("bookmark"), dict):
+            from browser_bookmarks_tools.services.metadata.collection_store import CollectionStore
             from browser_bookmarks_tools.services.metadata.enrich import enrich_bookmark
             from browser_bookmarks_tools.services.metadata.sidecar_db import SidecarMetadataStore
 
             url = result["bookmark"].get("url")
             if url:
                 meta = SidecarMetadataStore().get(url, browser=browser_id, profile_name=profile)
-                result["bookmark"] = enrich_bookmark(result["bookmark"], meta)
+                member_collections = (
+                    CollectionStore().get_collections_for_urls([url], browser=browser_id, profile_name=profile).get(url)
+                )
+                result["bookmark"] = enrich_bookmark(result["bookmark"], meta, member_collections)
         return result
 
     if operation in ("import_bookmarks", "import_html"):

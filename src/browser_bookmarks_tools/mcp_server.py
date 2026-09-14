@@ -23,6 +23,7 @@ def _register_tools() -> None:
         bookmark_metadata,
         browser_bookmarks,
         chrome_profiles,
+        collections,
         firefox_backup,
         firefox_curated,
         firefox_profiles,
