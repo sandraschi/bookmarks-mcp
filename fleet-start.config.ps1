@@ -5,7 +5,7 @@
     BackendPort  = 10803
     FrontendPort = 10802
     HealthPath   = '/health'
-    WebRoot      = 'D:\Dev\repos\bookmarks-mcp\web_sota'
+    WebRoot      = 'web_sota'
     Backend = @{
         Kind          = 'uvicorn'
         UvicornTarget = 'browser_bookmarks_tools.server:app'
