@@ -1,4 +1,4 @@
-"""FastMCP 3.3 Prefab app tools — interactive UI for bookmark operations."""
+"""FastMCP 3.3 Prefab app tools - interactive UI for bookmark operations."""
 
 from __future__ import annotations
 
@@ -351,7 +351,7 @@ async def import_execute_ui(
                         Text(f"Target: {target_browser} / {target_profile or 'Default'}")
                         Text(f"Count: {result.get('count', 0)}")
                         if dry_run:
-                            Text("Dry run — set dry_run=False to write bookmarks.")
+                            Text("Dry run - set dry_run=False to write bookmarks.")
                         else:
                             Text(f"Succeeded: {result.get('succeeded', 0)} / {result.get('attempted', 0)}")
     return app

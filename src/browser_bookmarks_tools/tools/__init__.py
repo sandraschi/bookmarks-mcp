@@ -1,4 +1,4 @@
-"""Bookmark MCP tools — multiple portmanteau surfaces, not one mega-tool."""
+"""Bookmark MCP tools - multiple portmanteau surfaces, not one mega-tool."""
 
 from . import (
     backup_restore,

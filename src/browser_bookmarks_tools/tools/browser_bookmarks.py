@@ -162,7 +162,7 @@ async def browser_bookmarks(
             preserve_folders=preserve_folders,
         )
 
-    # Gecko-family browsers — reuse firefox_bookmarks engine with registry paths
+    # Gecko-family browsers - reuse firefox_bookmarks engine with registry paths
     from browser_bookmarks_tools.services.browser.gecko_registry import is_gecko_browser, list_gecko_browser_ids
 
     if is_gecko_browser(browser_lower):
@@ -199,7 +199,7 @@ async def browser_bookmarks(
                 result.update(page_info)
         return _maybe_enrich(result, browser_id=browser_lower, profile=profile_name)
 
-    # Chromium-family browsers — registry-driven unified adapter
+    # Chromium-family browsers - registry-driven unified adapter
     from browser_bookmarks_tools.tools.chromium import (
         add_chromium_bookmark,
         delete_chromium_bookmark,

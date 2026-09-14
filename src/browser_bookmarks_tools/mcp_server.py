@@ -1,4 +1,4 @@
-"""FastMCP server — multi-portmanteau bookmark tools."""
+"""FastMCP server - multi-portmanteau bookmark tools."""
 
 import logging
 import os

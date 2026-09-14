@@ -102,7 +102,7 @@ def _build_specs() -> dict[str, GeckoBrowserSpec]:
             process_names=frozenset({"firefox.exe", "tor.exe", "tor browser", "Tor Browser"}),
             profile_layout=GeckoProfileLayout.SINGLE_PROFILE,
             read_only_recommended=True,
-            notes="Single isolated profile; writes affect anonymity profile — prefer read-only ops.",
+            notes="Single isolated profile; writes affect anonymity profile - prefer read-only ops.",
         ),
     }
 

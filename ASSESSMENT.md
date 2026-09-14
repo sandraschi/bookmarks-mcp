@@ -1,8 +1,8 @@
-# bookmarks-mcp — Technical Assessment
+# bookmarks-mcp -- Technical Assessment
 
-**Repository**: `D:\Dev\repos\bookmarks-mcp`  
-**Version assessed**: `0.2.0` (pyproject / manifest)  
-**Assessment date**: 2026-06-01  
+**Repository**: `D:\Dev\repos\bookmarks-mcp`
+**Version assessed**: `0.2.0` (pyproject / manifest)
+**Assessment date**: 2026-06-01
 **Scope**: MCP tools, browser backends, web dashboard, tests, docs accuracy, extension to all commonly used browsers
 
 ---
@@ -26,11 +26,11 @@ Estimated effort to cover **~90% of desktop users**: **2–3 weeks** focused ref
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| **1 — Chromium unification** | Done | `chromium_registry.py` (10 ids incl. comet, dia), `ChromiumManager`, unified `tools/chromium.py`, `profile_name` |
-| **2 — Gecko fork registry** | Done | `gecko_registry.py` (firefox, zen, librewolf, waterfox, floorp, tor), parameterized paths + status |
-| **3 — Safari adapter** | Done | `safari_plist.py`, `tools/safari.py`, macOS gate + explicit-path tests on Windows |
-| **4 — Feature lift** | Done | `universal_bookmark_ops.py`, `bookmark_loader.py`, folder-aware `sync_tree.py` |
-| **5 — Interchange + sidecar metadata** | Done | HTML/JSON import, `bookmark_metadata` sidecar SQLite, `docs/MOBILE_IMPORT.md` |
+| **1 -- Chromium unification** | Done | `chromium_registry.py` (10 ids incl. comet, dia), `ChromiumManager`, unified `tools/chromium.py`, `profile_name` |
+| **2 -- Gecko fork registry** | Done | `gecko_registry.py` (firefox, zen, librewolf, waterfox, floorp, tor), parameterized paths + status |
+| **3 -- Safari adapter** | Done | `safari_plist.py`, `tools/safari.py`, macOS gate + explicit-path tests on Windows |
+| **4 -- Feature lift** | Done | `universal_bookmark_ops.py`, `bookmark_loader.py`, folder-aware `sync_tree.py` |
+| **5 -- Interchange + sidecar metadata** | Done | HTML/JSON import, `bookmark_metadata` sidecar SQLite, `docs/MOBILE_IMPORT.md` |
 
 **Tests**: 30 unit tests (registry, safari plist, universal ops, sync dry-run, chromium fixture). Web API tests require a FastAPI/Starlette-compatible venv.
 
@@ -66,7 +66,7 @@ Smoke test (`tests/unit/test_portmanteau_smoke.py`) confirms all nine tools regi
 
 - **Web dashboard** (`web_sota/` + FastAPI `web.py`): CRUD, tree, search, sync wizard, activity log.
 - **HTTP transport** on port 10803; frontend 10802; optional Tauri shell.
-- **MCPB manifest** present (`manifest.json`, v0.2.0) — prior “no MCPB” fleet note is obsolete.
+- **MCPB manifest** present (`manifest.json`, v0.2.0) -- prior “no MCPB” fleet note is obsolete.
 - **Industrial tooling**: Ruff, Justfile, pytest (minimal suite).
 
 ---
@@ -81,32 +81,32 @@ browser_bookmarks (portmanteau)
 
 Parallel (mostly unused in portmanteau):
 ├── services/browser/base_browser.py   (abstract interface)
-└── services/browser/chrome_core.py    (ChromeManager — only chrome_profiles uses it)
+└── services/browser/chrome_core.py    (ChromeManager -- only chrome_profiles uses it)
 
 sync_bookmarks → list_* / add_* per browser (flat URL list)
 ```
 
-**Key structural issue**: two competing Chromium stacks — `chromium_common` + per-browser `__init__.py` wrappers **vs** `ChromeManager` with proper profile discovery. `browser_bookmarks` uses the former and **hardcodes Default profile paths**; `chrome_profiles` uses the latter and supports Profile 1, Profile 2, etc.
+**Key structural issue**: two competing Chromium stacks -- `chromium_common` + per-browser `__init__.py` wrappers **vs** `ChromeManager` with proper profile discovery. `browser_bookmarks` uses the former and **hardcodes Default profile paths**; `chrome_profiles` uses the latter and supports Profile 1, Profile 2, etc.
 
 ---
 
 ## Browser support matrix
 
-### Tier A — must support (global desktop share)
+### Tier A -- must support (global desktop share)
 
 | Browser | Engine | Status in repo | Gap severity |
 |---------|--------|----------------|--------------|
-| **Google Chrome** | Chromium | Partial | Medium — Default profile only in `CHROME_BOOKMARK_PATHS` |
-| **Microsoft Edge** | Chromium | Partial | Medium — same as Chrome |
-| **Mozilla Firefox** | Gecko | **Full** | Low — reference implementation |
+| **Google Chrome** | Chromium | Partial | Medium -- Default profile only in `CHROME_BOOKMARK_PATHS` |
+| **Microsoft Edge** | Chromium | Partial | Medium -- same as Chrome |
+| **Mozilla Firefox** | Gecko | **Full** | Low -- reference implementation |
 | **Apple Safari** | WebKit | **Not implemented** (docs lie) | **Critical** |
-| **Brave** | Chromium | Partial | Medium — duplicate of Chrome pattern |
-| **Opera** | Chromium | Missing | High — same JSON format, different path |
+| **Brave** | Chromium | Partial | Medium -- duplicate of Chrome pattern |
+| **Opera** | Chromium | Missing | High -- same JSON format, different path |
 | **Vivaldi** | Chromium | Missing | High |
 | **Arc** | Chromium | Missing | Medium (macOS-heavy) |
 | **Chromium** (OSS) | Chromium | Missing | Medium (Linux default) |
 
-### Tier B — meaningful niche / fork coverage
+### Tier B -- meaningful niche / fork coverage
 
 | Browser | Engine | Notes | Recommended approach |
 |---------|--------|-------|---------------------|
@@ -117,7 +117,7 @@ sync_bookmarks → list_* / add_* per browser (flat URL list)
 | **Samsung Internet** | Chromium (mobile) | No desktop JSON path | Export/import (HTML) only |
 | **DuckDuckGo browser** | Chromium-based | Growing share | Chromium registry entry |
 
-### Tier C — legacy / out of scope unless requested
+### Tier C -- legacy / out of scope unless requested
 
 | Browser | Reason to defer |
 |---------|-----------------|
@@ -150,7 +150,7 @@ Operations exposed on `browser_bookmarks` (`operation_types.py`):
 | get_bookmark_stats | ✅ | ❌ | ❌ | ❌ | ✅ |
 | refresh_bookmarks | ✅ | ❌ | ❌ | ❌ | Low priority |
 
-**Firefox-only MCP tools** (6/9): profiles, backup, curated, tagging, utils, AI portmanteau — acceptable if documented as Gecko-exclusive, but several (backup, broken links, export, dedupe) are **browser-agnostic** and should lift to `browser_bookmarks`.
+**Firefox-only MCP tools** (6/9): profiles, backup, curated, tagging, utils, AI portmanteau -- acceptable if documented as Gecko-exclusive, but several (backup, broken links, export, dedupe) are **browser-agnostic** and should lift to `browser_bookmarks`.
 
 ---
 
@@ -175,7 +175,7 @@ Operations exposed on `browser_bookmarks` (`operation_types.py`):
 | I3 | **Chromium search loads entire bookmark set** | `browser_bookmarks` lists all then filters | Slow on 10k+ bookmarks |
 | I4 | **Lock detection brittle for Chromium** | `ChromeManager.is_database_locked` checks `chrome.exe` substring | False positives/negatives (Edge, Brave, Arc) |
 | I5 | **Test coverage thin** | 4 test files; no Firefox integration; fixture JSON only | Regressions likely on refactor |
-| I6 | **Documentation drift** | README project tree shows `bookmarks/manager.py` — not present | Onboarding friction |
+| I6 | **Documentation drift** | README project tree shows `bookmarks/manager.py` -- not present | Onboarding friction |
 | I7 | **`browsers/` package empty** | `browsers/__init__.py` is empty | Missed central registration point |
 | I8 | **AI portmanteau is Firefox-only** | Uses `FirefoxDB` | Dashboard “AI Command” misleading for Chrome users |
 
@@ -191,7 +191,7 @@ Operations exposed on `browser_bookmarks` (`operation_types.py`):
 
 ---
 
-## Extension plan — all browsers in general use
+## Extension plan -- all browsers in general use
 
 ### Design principle: three storage families, one portmanteau
 
@@ -208,7 +208,7 @@ Operations exposed on `browser_bookmarks` (`operation_types.py`):
     waterfox, tor     vivaldi, arc, …
 ```
 
-### Phase 1 — Chromium unification (covers ~8 browsers, ~1 week)
+### Phase 1 -- Chromium unification (covers ~8 browsers, ~1 week)
 
 **Goal**: Replace `tools/chrome|edge|brave/__init__.py` triplication with one module.
 
@@ -243,7 +243,7 @@ class ChromiumBrowserSpec:
 
 **Acceptance**: CRUD + search on Chrome Profile 1; Opera + Vivaldi list/add; single test fixture per family.
 
-### Phase 2 — Gecko fork registry (~3 days)
+### Phase 2 -- Gecko fork registry (~3 days)
 
 **Goal**: One `GeckoManager` with path templates.
 
@@ -259,18 +259,18 @@ Reuse existing `tools/firefox/*` by parameterizing profile resolution (`get_plac
 
 **Acceptance**: `browser_bookmarks(browser="zen", …)` passes smoke CRUD on a test profile.
 
-### Phase 3 — Safari adapter (macOS only, ~1 week)
+### Phase 3 -- Safari adapter (macOS only, ~1 week)
 
 **Goal**: Honest Tier A coverage on darwin.
 
 1. Read/write `~/Library/Safari/Bookmarks.plist` via `plistlib`.
 2. Map WebKit folder tree to shared bookmark dict shape.
 3. Document: Safari must be closed; SIP / Full Disk Access may be required on recent macOS.
-4. Gate tool with platform check — return structured error on Windows/Linux.
+4. Gate tool with platform check -- return structured error on Windows/Linux.
 
 **Acceptance**: list/add/delete on macOS CI runner or documented manual test.
 
-### Phase 4 — Feature lift (browser-agnostic ops, ~2 weeks)
+### Phase 4 -- Feature lift (browser-agnostic ops, ~2 weeks)
 
 | Operation | Implementation notes |
 |-----------|---------------------|
@@ -283,11 +283,11 @@ Reuse existing `tools/firefox/*` by parameterizing profile resolution (`get_plac
 
 Promote **backup/restore** to `chromium_profiles` portmanteau (mirror `firefox_backup`).
 
-### Phase 5 — Interchange, mobile, sidecar metadata (done)
+### Phase 5 -- Interchange, mobile, sidecar metadata (done)
 
 - **Import**: Netscape HTML, Chrome/Firefox JSON via `import_bookmarks` / `import_html` (`import_path`, no live browser required for parsing)
-- **Mobile**: `docs/MOBILE_IMPORT.md` — Samsung Internet / iOS export → import workflow
-- **Sidecar SQLite** (`~/.bookmarks-mcp/metadata.db`): description, tags, starred (0–5), read_count, last_read_at, user_comment — keyed by `(url, browser, profile_name)` with global fallback
+- **Mobile**: `docs/MOBILE_IMPORT.md` -- Samsung Internet / iOS export → import workflow
+- **Sidecar SQLite** (`~/.bookmarks-mcp/metadata.db`): description, tags, starred (0–5), read_count, last_read_at, user_comment -- keyed by `(url, browser, profile_name)` with global fallback
 - **Tool**: `bookmark_metadata` (get/set/list/record_read/import_metadata/sidecar_info)
 - **Merge**: `include_metadata=True` on `browser_bookmarks` list/search/get
 
@@ -321,7 +321,7 @@ Promote **backup/restore** to `chromium_profiles` portmanteau (mirror `firefox_b
 
 ## Documentation corrections (immediate, no code)
 
-1. Remove Safari from “supported” lists until Phase 3 ships — or mark **planned**.
+1. Remove Safari from “supported” lists until Phase 3 ships -- or mark **planned**.
 2. Fix README project tree to match `src/browser_bookmarks_tools/tools/`.
 3. Align CHANGELOG with FastMCP 3.3 and actual v0.2.0 scope.
 4. Document **profile_name** behaviour per browser family in `MCP_CONFIGURATION.md`.
@@ -368,7 +368,7 @@ The fastest route to general-use browser coverage:
 4. **Safari plist** (macOS credibility).
 5. **Lift browser-agnostic intelligence** (export, dedupe, link check, stats) out of Firefox-only modules.
 
-After Phase 1–2, the project supports **all major desktop browsers in general use** with consistent CRUD. After Phase 4, it supports **credible cross-browser migration and maintenance** — the actual user-facing promise of the repo.
+After Phase 1–2, the project supports **all major desktop browsers in general use** with consistent CRUD. After Phase 4, it supports **credible cross-browser migration and maintenance** -- the actual user-facing promise of the repo.
 
 ---
 

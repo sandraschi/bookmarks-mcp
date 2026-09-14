@@ -1,4 +1,4 @@
-"""Chrome bookmark tools — delegates to unified chromium adapter."""
+"""Chrome bookmark tools - delegates to unified chromium adapter."""
 
 from typing import Any
 

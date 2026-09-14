@@ -1,4 +1,4 @@
-"""Brave bookmark tools — delegates to unified chromium adapter."""
+"""Brave bookmark tools - delegates to unified chromium adapter."""
 
 from typing import Any
 
