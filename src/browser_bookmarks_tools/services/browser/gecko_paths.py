@@ -63,6 +63,30 @@ def parse_profiles_ini(browser_id: str = "firefox") -> dict[str, dict[str, Any]]
     return profiles
 
 
+def _get_install_default_path(browser_id: str) -> str | None:
+    """The active default profile per the modern per-install [InstallXXXX] section.
+
+    Since Firefox 67, profiles.ini can carry both a legacy [ProfileN] Default=1
+    flag (kept for backward compatibility, and easy to leave stale - e.g. a
+    profile deleted or replaced without ever clearing that flag) and an
+    [InstallXXXX] section whose Default= is the actual path Firefox itself
+    launches into. The install section wins when both are present; that's
+    what real Firefox does, and a mismatch between the two is exactly the
+    "profile with no places.sqlite" trap this resolves.
+    """
+    profiles_ini = get_profiles_ini_path(browser_id)
+    if not profiles_ini or not profiles_ini.exists():
+        return None
+    config = configparser.ConfigParser()
+    config.read(profiles_ini)
+    for section in config.sections():
+        if section.startswith("Install"):
+            default = config[section].get("Default")
+            if default:
+                return default
+    return None
+
+
 def resolve_profile_directory(browser_id: str, profile_name: str | None = None) -> Path | None:
     spec = get_gecko_spec(browser_id)
 
@@ -79,6 +103,13 @@ def resolve_profile_directory(browser_id: str, profile_name: str | None = None) 
         return None
 
     selected = profile_name
+    if not selected:
+        install_default_path = _get_install_default_path(browser_id)
+        if install_default_path:
+            for name, profile in profiles.items():
+                if (_profile_ini_value(profile, "Path") or "") == install_default_path:
+                    selected = name
+                    break
     if not selected:
         for name, profile in profiles.items():
             if (_profile_ini_value(profile, "Default") or "0") == "1":
