@@ -52,6 +52,10 @@ serve:
 build-native:
     powershell.exe -NoLogo -File '{{justfile_directory()}}\native\build.ps1'
 
+# Bundle for Claude Desktop (MCPB) -- wipes+recopies src -> mcpb/src first
+mcpb-pack:
+    pwsh.exe -NoProfile -ExecutionPolicy Bypass -File '{{justfile_directory()}}\mcpb\pack.ps1'
+
 # Dev: backend + Vite (run in two terminals; this starts backend only)
 dev-backend:
     just serve
