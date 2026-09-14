@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 from dataclasses import dataclass
@@ -182,13 +183,55 @@ def resolve_user_data_dir(browser_id: str) -> Path | None:
     return None
 
 
+def resolve_active_chromium_profile(browser_id: str) -> str:
+    """The profile folder this browser itself would reopen - not just a hardcoded guess.
+
+    `spec.default_profile` ("Default") is only actually correct for a user who
+    never created or switched profiles. A user who deleted/renamed the
+    original Default profile, or who habitually launches into a different
+    one, has a real profile.last_used value in Local State that diverges
+    from the literal string "Default" - the same class of bug as Firefox's
+    profiles.ini legacy-flag-vs-install-section divergence (see
+    gecko_paths.py::resolve_profile_directory). Local State is what
+    Chrome/Edge/Brave/etc. themselves read to decide which profile to
+    reopen, so mirror that instead of guessing.
+    """
+    spec = get_chromium_spec(browser_id)
+    user_data = resolve_user_data_dir(browser_id)
+    if user_data is None:
+        return spec.default_profile
+
+    local_state_path = user_data / "Local State"
+    if not local_state_path.exists():
+        return spec.default_profile
+
+    try:
+        with local_state_path.open(encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        return spec.default_profile
+
+    profile_info = data.get("profile") or {}
+    candidates = []
+    last_used = profile_info.get("last_used")
+    if last_used:
+        candidates.append(last_used)
+    candidates.extend(profile_info.get("last_active_profiles") or [])
+
+    for candidate in candidates:
+        if (user_data / candidate / "Bookmarks").exists():
+            return candidate
+
+    return spec.default_profile
+
+
 def resolve_bookmarks_file(browser_id: str, profile_name: str | None = None) -> Path | None:
     spec = get_chromium_spec(browser_id)
     user_data = resolve_user_data_dir(browser_id)
     if user_data is None:
         return None
 
-    profile = profile_name or spec.default_profile
+    profile = profile_name or resolve_active_chromium_profile(browser_id)
 
     if spec.profile_layout == ProfileLayout.FLAT_PROFILE:
         bookmarks = user_data / "Bookmarks"

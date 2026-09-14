@@ -204,6 +204,7 @@ async def browser_bookmarks(
         return _maybe_enrich(result, browser_id=browser_lower, profile=profile_name)
 
     # Chromium-family browsers - registry-driven unified adapter
+    from browser_bookmarks_tools.services.browser.chromium_registry import resolve_active_chromium_profile
     from browser_bookmarks_tools.tools.chromium import (
         add_chromium_bookmark,
         delete_chromium_bookmark,
@@ -220,7 +221,7 @@ async def browser_bookmarks(
     )
 
     if is_chromium_browser(browser_lower):
-        profile = profile_name or "Default"
+        profile = profile_name or resolve_active_chromium_profile(browser_lower)
 
         if operation in UNIVERSAL_ADVANCED_OPERATIONS:
             return await execute_universal_operation(

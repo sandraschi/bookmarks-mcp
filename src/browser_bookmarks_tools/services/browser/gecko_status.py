@@ -7,7 +7,25 @@ from typing import Any
 
 import psutil
 
+from browser_bookmarks_tools.services.browser.gecko_paths import parse_profiles_ini, resolve_profile_directory
 from browser_bookmarks_tools.services.browser.gecko_registry import get_gecko_spec
+
+
+def _profiles_with_data(browser_id: str) -> list[str]:
+    """Other configured profiles that do have a places.sqlite.
+
+    Surfaced on a "database not found" error so a profile-selection mismatch
+    (auto-detection picked the wrong profile, or the caller passed the wrong
+    name) is visible immediately instead of looking identical to "this
+    browser was never installed" or "this is a genuinely fresh, empty
+    profile".
+    """
+    names = []
+    for name in parse_profiles_ini(browser_id):
+        profile_dir = resolve_profile_directory(browser_id, name)
+        if profile_dir and (profile_dir / "places.sqlite").exists():
+            names.append(name)
+    return names
 
 
 class GeckoStatusChecker:
@@ -83,11 +101,23 @@ class GeckoStatusChecker:
 
             places_db = profile_path / "places.sqlite"
             if not places_db.exists():
+                other_profiles = [name for name in _profiles_with_data(browser_id) if name not in str(profile_path)]
+                message = f"places.sqlite not found at: {places_db}"
+                if other_profiles:
+                    message += (
+                        f". This profile looks unused or freshly created. Profile(s) with actual "
+                        f"data: {', '.join(other_profiles)} - pass profile_name explicitly to use one of these."
+                    )
+                else:
+                    message += (
+                        ". No configured profile for this browser has a places.sqlite yet - "
+                        "if you just installed it, open it once and add a bookmark first."
+                    )
                 return {
                     "safe": False,
                     "reason": "database_not_found",
-                    "message": f"places.sqlite not found at: {places_db}",
-                    "details": {"database_path": str(places_db)},
+                    "message": message,
+                    "details": {"database_path": str(places_db), "profiles_with_data": other_profiles},
                 }
 
         return {"safe": True, "message": f"Safe to access {spec.display_name} databases", "details": status}

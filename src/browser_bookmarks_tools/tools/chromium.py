@@ -11,6 +11,7 @@ from browser_bookmarks_tools.services.browser.chromium_registry import (
     is_chromium_browser,
     list_chromium_browser_ids,
     list_chromium_browsers,
+    resolve_active_chromium_profile,
     resolve_bookmarks_file,
 )
 from browser_bookmarks_tools.tools.chromium_common import (
@@ -48,8 +49,7 @@ def resolve_bookmarks_path(
         path = Path(bookmarks_path)
         return path if path.exists() else None
 
-    spec = get_chromium_spec(browser)
-    profile = profile_name or spec.default_profile
+    profile = profile_name or resolve_active_chromium_profile(browser)
     return resolve_bookmarks_file(browser, profile)
 
 
@@ -68,7 +68,7 @@ def _normalize_result(
         out["success"] = status != "error"
     out["browser"] = browser
     out["browser_family"] = "chromium"
-    out["profile_name"] = profile_name or get_chromium_spec(browser).default_profile
+    out["profile_name"] = profile_name or resolve_active_chromium_profile(browser)
     if operation:
         out["operation"] = operation
     return out
@@ -87,7 +87,7 @@ async def list_chromium_bookmarks(
             "status": "error",
             "browser": browser,
             "browser_family": "chromium",
-            "profile_name": profile_name or spec.default_profile,
+            "profile_name": profile_name or resolve_active_chromium_profile(browser),
             "error": f"Bookmarks file not found for {spec.display_name}",
             "error_code": "CHROMIUM_FILE_NOT_FOUND",
             "recovery_options": [

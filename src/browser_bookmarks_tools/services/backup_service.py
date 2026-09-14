@@ -12,6 +12,7 @@ from browser_bookmarks_tools.services.browser.chromium_manager import ChromiumMa
 from browser_bookmarks_tools.services.browser.chromium_registry import (
     is_chromium_browser,
     list_chromium_browser_ids,
+    resolve_active_chromium_profile,
 )
 from browser_bookmarks_tools.services.browser.gecko_paths import parse_profiles_ini, resolve_profile_directory
 from browser_bookmarks_tools.services.browser.gecko_registry import (
@@ -99,12 +100,16 @@ async def backup_browser_profile(
     backup_destination: str | None = None,
 ) -> dict[str, Any]:
     browser_key = browser.lower()
-    profile = profile_name or "Default"
     dest = Path(backup_destination) if backup_destination else default_backup_root()
     dest.mkdir(parents=True, exist_ok=True)
 
     if is_gecko_browser(browser_key):
-        profile_dir = resolve_profile_directory(browser_key, profile_name or "default")
+        # Pass profile_name through as-is (None included) so
+        # resolve_profile_directory can apply its own install-section-aware
+        # default resolution - substituting a literal "default" here would
+        # bypass that and risk backing up a stale/empty profile instead of
+        # the one Firefox actually uses.
+        profile_dir = resolve_profile_directory(browser_key, profile_name)
         if profile_dir is None or not profile_dir.exists():
             return {
                 "success": False,
@@ -112,19 +117,20 @@ async def backup_browser_profile(
                 "profile_name": profile_name or "default",
                 "error": f"Gecko profile not found: {browser_key}/{profile_name or 'default'}",
             }
-        archive_base = dest / f"{browser_key}_{profile_name or 'default'}_{_timestamp()}"
+        resolved_name = profile_name or profile_dir.name
+        archive_base = dest / f"{browser_key}_{resolved_name}_{_timestamp()}"
         backup_file = shutil.make_archive(str(archive_base), "zip", str(profile_dir))
         return {
             "success": True,
             "browser": browser_key,
             "browser_family": "gecko",
-            "profile_name": profile_name or "default",
+            "profile_name": resolved_name,
             "backup_path": backup_file,
         }
 
     if is_chromium_browser(browser_key):
         manager = ChromiumManager(browser_key)
-        chromium_profile = profile if profile != "default" else "Default"
+        chromium_profile = profile_name or resolve_active_chromium_profile(browser_key)
         backup_file = await manager.backup_profile(chromium_profile, str(dest))
         return {
             "success": True,
@@ -168,7 +174,7 @@ async def restore_browser_profile(
         return {"success": False, "error": f"Backup file not found: {backup_file}"}
 
     if is_gecko_browser(browser_key):
-        profile_dir = resolve_profile_directory(browser_key, profile_name or "default")
+        profile_dir = resolve_profile_directory(browser_key, profile_name)
         if profile_dir is None:
             return {"success": False, "error": "Target gecko profile directory not found"}
         if profile_dir.exists() and not overwrite:
@@ -184,13 +190,13 @@ async def restore_browser_profile(
             "success": True,
             "browser": browser_key,
             "browser_family": "gecko",
-            "profile_name": profile_name or "default",
+            "profile_name": profile_name or profile_dir.name,
             "profile_path": str(profile_dir),
         }
 
     if is_chromium_browser(browser_key):
         manager = ChromiumManager(browser_key)
-        chromium_profile = profile_name or "Default"
+        chromium_profile = profile_name or resolve_active_chromium_profile(browser_key)
         result = await manager.restore_profile(chromium_profile, backup_file, overwrite=overwrite)
         result["browser"] = browser_key
         result["browser_family"] = "chromium"

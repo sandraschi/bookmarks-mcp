@@ -15,6 +15,7 @@ from browser_bookmarks_tools.services.browser.base_browser import BaseBrowserMan
 from browser_bookmarks_tools.services.browser.chromium_registry import (
     ProfileLayout,
     get_chromium_spec,
+    resolve_active_chromium_profile,
     resolve_user_data_dir,
 )
 
@@ -148,7 +149,7 @@ class ChromiumManager(BaseBrowserManager):
         if self.user_data_dir is None:
             raise RuntimeError(f"{self.spec.display_name} is not installed")
 
-        profile = profile_name or self.spec.default_profile
+        profile = profile_name or resolve_active_chromium_profile(self.browser_id)
 
         if self.spec.profile_layout == ProfileLayout.FLAT_PROFILE:
             return str(self.user_data_dir / "Bookmarks")

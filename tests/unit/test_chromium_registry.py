@@ -8,6 +8,7 @@ from browser_bookmarks_tools.services.browser.chromium_registry import (
     get_chromium_spec,
     is_chromium_browser,
     list_chromium_browser_ids,
+    resolve_active_chromium_profile,
 )
 from browser_bookmarks_tools.tools.chromium import (
     add_chromium_bookmark,
@@ -107,6 +108,65 @@ async def test_chromium_manager_parses_fixture(tmp_path: Path):
     parsed = await manager.parse_bookmarks("Default")
     assert len(parsed) == 2
     assert parsed[0]["url"]
+
+
+def _make_user_data(tmp_path: Path, profiles: list[str]) -> Path:
+    user_data = tmp_path / "User Data"
+    for profile in profiles:
+        profile_dir = user_data / profile
+        profile_dir.mkdir(parents=True)
+        (profile_dir / "Bookmarks").write_text(
+            json.dumps({"checksum": "x", "roots": {}, "version": 1}), encoding="utf-8"
+        )
+    return user_data
+
+
+def test_resolve_active_chromium_profile_prefers_local_state_last_used(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Reproduces the Chromium analogue of the Firefox profiles.ini bug: a user
+    who created/switched to "Profile 1" has that reflected in Local State's
+    profile.last_used, but spec.default_profile is a hardcoded "Default"
+    literal. Picking the literal over the real signal risks silently reading
+    an empty/abandoned Default profile instead of the one actually in use.
+    """
+    user_data = _make_user_data(tmp_path, ["Default", "Profile 1"])
+    (user_data / "Local State").write_text(
+        json.dumps({"profile": {"last_used": "Profile 1", "last_active_profiles": ["Profile 1"]}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "browser_bookmarks_tools.services.browser.chromium_registry.resolve_user_data_dir",
+        lambda browser_id: user_data if browser_id == "chrome" else None,
+    )
+
+    assert resolve_active_chromium_profile("chrome") == "Profile 1"
+
+
+def test_resolve_active_chromium_profile_falls_back_without_local_state(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    user_data = _make_user_data(tmp_path, ["Default"])
+    monkeypatch.setattr(
+        "browser_bookmarks_tools.services.browser.chromium_registry.resolve_user_data_dir",
+        lambda browser_id: user_data if browser_id == "chrome" else None,
+    )
+
+    assert resolve_active_chromium_profile("chrome") == "Default"
+
+
+def test_resolve_active_chromium_profile_falls_back_when_last_used_profile_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    user_data = _make_user_data(tmp_path, ["Default"])
+    (user_data / "Local State").write_text(
+        json.dumps({"profile": {"last_used": "Profile 7", "last_active_profiles": ["Profile 7"]}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "browser_bookmarks_tools.services.browser.chromium_registry.resolve_user_data_dir",
+        lambda browser_id: user_data if browser_id == "chrome" else None,
+    )
+
+    assert resolve_active_chromium_profile("chrome") == "Default"
 
 
 @pytest.mark.asyncio

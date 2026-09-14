@@ -135,16 +135,18 @@ def _chromium_node_to_tree(node: dict[str, Any], parent_path: str = "") -> dict[
 
 
 def _read_chromium_tree(browser: str, profile_name: str | None = None) -> dict[str, Any]:
+    from browser_bookmarks_tools.services.browser.chromium_registry import resolve_active_chromium_profile
     from browser_bookmarks_tools.tools.chromium import resolve_bookmarks_path
 
     if not is_chromium_browser(browser):
         return {"success": False, "error": f"Unsupported browser for tree: {browser}"}
 
+    resolved_profile = profile_name or resolve_active_chromium_profile(browser)
     path = resolve_bookmarks_path(browser, profile_name)
     if path is None or not path.exists():
         return {
             "success": False,
-            "error": f"Bookmarks file not found for {browser} profile {profile_name or 'Default'}",
+            "error": f"Bookmarks file not found for {browser} profile {resolved_profile}",
         }
 
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -160,7 +162,7 @@ def _read_chromium_tree(browser: str, profile_name: str | None = None) -> dict[s
     return {
         "success": True,
         "browser": browser,
-        "profile_name": profile_name or "Default",
+        "profile_name": resolved_profile,
         "tree": tree,
     }
 

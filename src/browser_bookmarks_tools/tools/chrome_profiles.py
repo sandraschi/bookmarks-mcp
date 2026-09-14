@@ -14,6 +14,7 @@ from typing import Any
 from browser_bookmarks_tools.config.mcp_config import mcp
 from browser_bookmarks_tools.operation_types import ChromeProfilesOperation
 from browser_bookmarks_tools.services.browser.chrome_core import ChromeManager
+from browser_bookmarks_tools.services.browser.chromium_registry import resolve_active_chromium_profile
 from browser_bookmarks_tools.tool_responses import mcp_error, unknown_operation_response
 
 _chrome_manager = ChromeManager()
@@ -57,7 +58,7 @@ async def chrome_profiles(
         Chrome running during restore: close Chrome and retry (retryable).
     """
 
-    pn = profile_name or "Default"
+    pn = profile_name or resolve_active_chromium_profile("chrome")
 
     try:
         if operation == "get_chrome_profiles":
