@@ -235,19 +235,7 @@ This project adheres to **SOTA 14.1** industrial standards for high-fidelity age
 
 Pages: Dashboard, Bookmarks (CRUD + pagination), Search (folder/tag filters), Tree, Bulk ops (sync wizard, export download), Tags, AI Command, MCP Tools, Settings, Help.
 
-### Production auth
-
-HTTP Basic auth is **enabled by default** on `/api/*` routes.
-
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `BOOKMARKS_WEB_AUTH` | `1` | Set `0` to disable (dev only) |
-| `BOOKMARKS_WEB_USER` | `admin` | Username |
-| `BOOKMARKS_WEB_PASS` | `mcp` | Password |
-
-Configure credentials in **Settings → API auth** (stored in browser localStorage as Basic auth header).
-
-Root `/health` is unauthenticated for load balancers.
+The web API has no authentication — it's a local dashboard over your own browser bookmarks, not a multi-tenant service. Bind it to localhost (the default) unless you have another reason to expose it on the network.
 
 ### Tauri desktop
 

@@ -143,8 +143,8 @@ export function Dashboard() {
       {error && (
         <p className="text-amber-400 text-sm">
           {error} — run{" "}
-          <code className="text-slate-300">web_sota/start.ps1</code> or check
-          Settings for API auth.
+          <code className="text-slate-300">web_sota/start.ps1</code> to start
+          the backend.
         </p>
       )}
 

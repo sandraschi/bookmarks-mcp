@@ -99,36 +99,12 @@ export interface AiChatResponse {
 }
 
 const API = import.meta.env.VITE_API_URL ?? "/api";
-const AUTH_KEY = "bookmarks-web-auth";
 const LLM_KEY = "bookmarks-llm-settings";
 
 export interface LlmSettings {
   provider: string;
   model: string;
   endpoint: string;
-}
-
-export interface WebAuth {
-  username: string;
-  password: string;
-}
-
-export function getStoredAuth(): WebAuth | null {
-  try {
-    const raw = localStorage.getItem(AUTH_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as WebAuth;
-  } catch {
-    return null;
-  }
-}
-
-export function setStoredAuth(auth: WebAuth | null): void {
-  if (!auth?.username) {
-    localStorage.removeItem(AUTH_KEY);
-    return;
-  }
-  localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
 }
 
 export function getLlmSettings(): LlmSettings {
@@ -149,20 +125,8 @@ export function setLlmSettings(settings: LlmSettings): void {
   localStorage.setItem(LLM_KEY, JSON.stringify(settings));
 }
 
-function authHeaders(): HeadersInit {
-  const auth = getStoredAuth();
-  if (!auth?.username) return {};
-  const token = btoa(`${auth.username}:${auth.password}`);
-  return { Authorization: `Basic ${token}` };
-}
-
 async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
-  const headers = new Headers(init?.headers);
-  const auth = authHeaders();
-  for (const [key, value] of Object.entries(auth)) {
-    headers.set(key, value);
-  }
-  return fetch(`${API}${path}`, { ...init, headers });
+  return fetch(`${API}${path}`, init);
 }
 
 export async function getHealth(): Promise<HealthResponse> {

@@ -46,7 +46,6 @@ serve:
     Set-Location '{{justfile_directory()}}'
     $env:MCP_TRANSPORT = 'http'
     $env:MCP_PORT = '10803'
-    $env:BOOKMARKS_WEB_AUTH = '0'
     uv run bookmarks-mcp
 
 # Build Tauri desktop installer (web_sota + sidecar + NSIS)
