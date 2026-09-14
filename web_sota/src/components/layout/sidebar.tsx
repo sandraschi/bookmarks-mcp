@@ -53,15 +53,27 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         collapsed ? "w-16" : "w-64",
       )}
     >
-      <div className="flex h-16 items-center border-b border-slate-800 px-4">
-        <div className="flex items-center gap-2 font-semibold text-slate-100">
-          <Bookmark className="h-6 w-6 text-blue-500" />
+      <div className="flex h-16 items-center justify-between border-b border-slate-800 px-3">
+        <div className="flex min-w-0 items-center gap-2 font-semibold text-slate-100">
+          <Bookmark className="h-6 w-6 shrink-0 text-blue-500" />
           {!collapsed && (
-            <span className="animate-in fade-in duration-300">
+            <span className="animate-in fade-in whitespace-nowrap duration-300">
               Bookmark Master
             </span>
           )}
         </div>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+        >
+          {collapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </button>
       </div>
 
       <nav className="flex-1 space-y-1 p-2">
@@ -95,23 +107,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           );
         })}
       </nav>
-
-      <div className="border-t border-slate-800 p-2">
-        <button
-          type="button"
-          onClick={onToggle}
-          className="flex w-full items-center justify-center rounded-md p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
-        >
-          {collapsed ? (
-            <ChevronRight className="h-5 w-5" />
-          ) : (
-            <div className="flex items-center w-full">
-              <ChevronLeft className="h-5 w-5 mr-3" />
-              <span>Collapse</span>
-            </div>
-          )}
-        </button>
-      </div>
     </aside>
   );
 }
