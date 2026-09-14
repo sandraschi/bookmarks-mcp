@@ -1,5 +1,6 @@
 import json
 import sqlite3
+import time
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +44,36 @@ class ExportRequest(BaseModel):
     profile_name: str | None = None
     export_format: str = "json"
     limit: int = 10_000
+
+
+class LlmTestRequest(BaseModel):
+    provider: str = "ollama"
+    model: str
+    endpoint: str | None = None
+
+
+class LlmTestResponse(BaseModel):
+    ok: bool
+    message: str
+    latency_ms: int | None = None
+
+
+def _extract_llm_error(resp: httpx.Response) -> str:
+    """Pull the actual provider error out of a failed response.
+
+    Listing models (GET /api/tags) only proves Ollama's HTTP server is up -
+    it says nothing about whether a model can actually run (e.g. a missing
+    llama-server.exe fails at inference time, not at list time). The body's
+    "error" field is what tells the user what's actually wrong.
+    """
+    try:
+        data = resp.json()
+        err = data.get("error")
+        if err:
+            return str(err)
+    except ValueError:
+        pass
+    return f"HTTP {resp.status_code}: {resp.text[:300]}"
 
 
 def _serialize_tool_result(result: Any) -> Any:
@@ -311,6 +342,43 @@ def setup_webapp(app, mcp_app=None) -> None:
                 except httpx.HTTPError:
                     pass
             return providers
+
+        @router.post("/llm/test", response_model=LlmTestResponse)
+        async def test_llm_model(request: LlmTestRequest):
+            """Actually run a minimal inference call - listing models only proves
+            the provider's HTTP server is reachable, not that a given model can run."""
+            endpoint = request.endpoint or (
+                "http://localhost:11434" if request.provider == "ollama" else "http://localhost:1234"
+            )
+            start = time.monotonic()
+            try:
+                async with httpx.AsyncClient(timeout=20.0) as client:
+                    if request.provider == "ollama":
+                        resp = await client.post(
+                            f"{endpoint}/api/generate",
+                            json={"model": request.model, "prompt": "ping", "stream": False},
+                        )
+                    elif request.provider == "lm_studio":
+                        resp = await client.post(
+                            f"{endpoint}/v1/chat/completions",
+                            json={
+                                "model": request.model,
+                                "messages": [{"role": "user", "content": "ping"}],
+                                "max_tokens": 5,
+                            },
+                        )
+                    else:
+                        return LlmTestResponse(ok=False, message=f"Unknown provider: {request.provider}")
+                latency_ms = int((time.monotonic() - start) * 1000)
+                if resp.status_code != 200:
+                    return LlmTestResponse(ok=False, message=_extract_llm_error(resp), latency_ms=latency_ms)
+                return LlmTestResponse(ok=True, message="Model responded", latency_ms=latency_ms)
+            except httpx.ConnectError:
+                return LlmTestResponse(ok=False, message=f"Could not connect to {endpoint} - is the server running?")
+            except httpx.TimeoutException:
+                return LlmTestResponse(ok=False, message="Request timed out - model may be loading or stuck")
+            except Exception as exc:
+                return LlmTestResponse(ok=False, message=str(exc))
 
         @router.post("/tools/call")
         async def call_tool_endpoint(request: ToolCallRequest):

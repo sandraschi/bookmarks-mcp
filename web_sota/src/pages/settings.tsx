@@ -1,6 +1,6 @@
-import { Cpu, RefreshCw } from "lucide-react";
+import { CheckCircle2, Cpu, Loader2, RefreshCw, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getHealth, getLlmProviders } from "@/common/api";
+import { getHealth, getLlmProviders, testLlmModel } from "@/common/api";
 import { useBookmarkSettings } from "@/common/bookmark-settings";
 import { BROWSERS } from "@/common/bookmark-types";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,10 @@ function LLMSettings() {
   >({});
   const [selectedProvider, setSelectedProvider] = useState("ollama");
   const [selectedModel, setSelectedModel] = useState("");
+  const [testState, setTestState] = useState<
+    "idle" | "testing" | "ok" | "fail"
+  >("idle");
+  const [testMessage, setTestMessage] = useState<string | null>(null);
   useEffect(() => {
     getLlmProviders()
       .then((d) => {
@@ -52,6 +56,25 @@ function LLMSettings() {
   };
   const models =
     providers[selectedProvider === "ollama" ? "ollama" : "lm_studio"] || [];
+
+  const runTest = async () => {
+    if (!selectedModel) return;
+    setTestState("testing");
+    setTestMessage(null);
+    try {
+      const result = await testLlmModel(selectedProvider, selectedModel);
+      setTestState(result.ok ? "ok" : "fail");
+      setTestMessage(
+        result.ok
+          ? `Responded in ${result.latency_ms ?? "?"}ms`
+          : result.message,
+      );
+    } catch (err) {
+      setTestState("fail");
+      setTestMessage(err instanceof Error ? err.message : "Test failed");
+    }
+  };
+
   return (
     <div className="space-y-3">
       <Select
@@ -59,6 +82,8 @@ function LLMSettings() {
         onValueChange={(v) => {
           setSelectedProvider(v);
           save(v, "");
+          setTestState("idle");
+          setTestMessage(null);
         }}
       >
         <SelectTrigger className="bg-slate-900 border-slate-800 text-slate-100">
@@ -74,6 +99,8 @@ function LLMSettings() {
         onValueChange={(v) => {
           setSelectedModel(v);
           save(selectedProvider, v);
+          setTestState("idle");
+          setTestMessage(null);
         }}
       >
         <SelectTrigger className="bg-slate-900 border-slate-800 text-slate-100">
@@ -87,6 +114,30 @@ function LLMSettings() {
           ))}
         </SelectContent>
       </Select>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-slate-800"
+          onClick={runTest}
+          disabled={!selectedModel || testState === "testing"}
+        >
+          {testState === "testing" ? (
+            <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+          ) : null}
+          Test model
+        </Button>
+        {testState === "ok" && (
+          <span className="flex items-center gap-1 text-sm text-emerald-400">
+            <CheckCircle2 className="h-4 w-4" /> {testMessage}
+          </span>
+        )}
+        {testState === "fail" && (
+          <span className="flex items-center gap-1 text-sm text-rose-400 break-all">
+            <XCircle className="h-4 w-4 shrink-0" /> {testMessage}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

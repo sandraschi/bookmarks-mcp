@@ -142,6 +142,26 @@ export async function getLlmProviders(): Promise<
   return r.json();
 }
 
+export interface LlmTestResult {
+  ok: boolean;
+  message: string;
+  latency_ms?: number | null;
+}
+
+export async function testLlmModel(
+  provider: string,
+  model: string,
+  endpoint?: string,
+): Promise<LlmTestResult> {
+  const r = await apiFetch("/llm/test", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ provider, model, endpoint }),
+  });
+  if (!r.ok) throw new Error(`Model test failed: ${r.status}`);
+  return r.json();
+}
+
 export async function getTools(): Promise<ToolsResponse> {
   const r = await apiFetch("/tools");
   if (!r.ok) throw new Error(`Tools list failed: ${r.status}`);
