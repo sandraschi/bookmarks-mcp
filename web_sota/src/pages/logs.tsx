@@ -43,13 +43,13 @@ const PAGE_SIZES = [25, 50, 100, 200] as const;
 function levelTone(level: string): string {
   const l = level.toUpperCase();
   if (l === "ERROR" || l === "CRITICAL")
-    return "text-rose-400 bg-rose-500/10 border-rose-500/30";
+    return "text-rose-300 bg-rose-500/15 border-rose-500/40";
   if (l === "WARNING")
-    return "text-amber-400 bg-amber-500/10 border-amber-500/30";
-  if (l === "INFO") return "text-sky-400 bg-sky-500/10 border-sky-500/30";
+    return "text-amber-300 bg-amber-500/15 border-amber-500/40";
+  if (l === "INFO") return "text-sky-300 bg-sky-500/15 border-sky-500/40";
   if (l === "DEBUG")
-    return "text-slate-400 bg-slate-500/10 border-slate-500/30";
-  return "text-slate-400 bg-slate-800/50 border-slate-700";
+    return "text-slate-300 bg-slate-500/15 border-slate-500/40";
+  return "text-slate-300 bg-slate-800/60 border-slate-600";
 }
 
 function formatTime(iso: string): string {
@@ -449,7 +449,7 @@ export function LogsPage() {
           <div
             ref={streamRef}
             onScroll={onStreamScroll}
-            className="max-h-[min(58vh,520px)] overflow-y-auto font-mono text-xs leading-relaxed"
+            className="max-h-[min(58vh,520px)] overflow-y-auto font-mono text-sm leading-relaxed"
           >
             {loading && entries.length === 0 ? (
               <p className="p-6 text-slate-500">Loading logs…</p>
@@ -463,22 +463,22 @@ export function LogsPage() {
                   key={entry.id}
                   className="grid grid-cols-[auto_auto_1fr] gap-x-3 border-b border-slate-800/80 px-4 py-2 hover:bg-slate-900/60"
                 >
-                  <time className="whitespace-nowrap text-slate-500">
+                  <time className="whitespace-nowrap text-slate-400">
                     {formatTime(entry.timestamp)}
                   </time>
                   <span
                     className={cn(
-                      "rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase",
+                      "rounded border px-1.5 py-0.5 text-xs font-semibold uppercase",
                       levelTone(entry.level),
                     )}
                   >
                     {entry.level}
                   </span>
-                  <div className="min-w-0 text-slate-200">
-                    <span className="text-violet-400">[{entry.kind}]</span>{" "}
+                  <div className="min-w-0 text-slate-100">
+                    <span className="text-violet-300">[{entry.kind}]</span>{" "}
                     {entry.detail}
                     {entry.meta && Object.keys(entry.meta).length > 0 && (
-                      <span className="mt-0.5 block truncate text-slate-500">
+                      <span className="mt-0.5 block truncate text-slate-400">
                         {JSON.stringify(entry.meta)}
                       </span>
                     )}
