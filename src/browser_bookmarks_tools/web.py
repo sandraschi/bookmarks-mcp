@@ -3,6 +3,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+import httpx
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -286,6 +287,30 @@ def setup_webapp(app, mcp_app=None) -> None:
         @router.get("/tools")
         async def list_tools():
             return {"tools": await _list_mcp_tools(mcp_app)}
+
+        @router.get("/llm/providers")
+        async def llm_providers():
+            """Locally-installed Ollama/LM Studio models, for the Settings page picker.
+
+            Best-effort: either service being unreachable just yields an empty list
+            for that provider rather than an error - there's no requirement that
+            either is actually running.
+            """
+            providers: dict[str, list[dict[str, str]]] = {"ollama": [], "lm_studio": []}
+            async with httpx.AsyncClient(timeout=1.5) as client:
+                try:
+                    resp = await client.get("http://localhost:11434/api/tags")
+                    if resp.status_code == 200:
+                        providers["ollama"] = [{"name": m["name"]} for m in resp.json().get("models", [])]
+                except httpx.HTTPError:
+                    pass
+                try:
+                    resp = await client.get("http://localhost:1234/v1/models")
+                    if resp.status_code == 200:
+                        providers["lm_studio"] = [{"name": m["id"]} for m in resp.json().get("data", [])]
+                except httpx.HTTPError:
+                    pass
+            return providers
 
         @router.post("/tools/call")
         async def call_tool_endpoint(request: ToolCallRequest):

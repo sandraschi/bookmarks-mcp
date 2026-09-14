@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import csv
 import json
 from collections import Counter
@@ -11,7 +10,7 @@ from html import escape
 from pathlib import Path
 from typing import Any
 
-import aiohttp
+from browser_bookmarks_tools.services.audit.link_checker import check_links_chunk
 
 
 def find_duplicates_from_bookmarks(
@@ -142,30 +141,6 @@ def export_bookmarks_to_file(
     }
 
 
-async def _check_one_link(session: aiohttp.ClientSession, bookmark: dict[str, Any]) -> dict[str, Any] | None:
-    """Check a single bookmark's URL. Returns a broken/redirected item, or None if it's fine."""
-    url = bookmark["url"]
-    title = bookmark.get("title")
-    try:
-        async with session.head(url, allow_redirects=True) as response:
-            status = response.status
-            final_url = str(response.url)
-        if status in (403, 405, 999):
-            # Some bot-hardened sites reject a bare HEAD; retry once with GET.
-            # Not calling .read()/.text() here releases the connection without
-            # downloading the body.
-            async with session.get(url, allow_redirects=True) as response:
-                status = response.status
-                final_url = str(response.url)
-        if status >= 400:
-            return {"title": title, "url": url, "status": status, "final_url": final_url, "is_broken": True}
-        if final_url != url:
-            return {"title": title, "url": url, "status": status, "final_url": final_url, "is_redirected": True}
-        return None
-    except Exception as exc:
-        return {"title": title, "url": url, "error": str(exc), "is_broken": True}
-
-
 async def find_broken_links_from_list(
     bookmarks: list[dict[str, Any]],
     *,
@@ -184,14 +159,26 @@ async def find_broken_links_from_list(
         }
 
     candidates = [b for b in bookmarks if b.get("url")][:limit]
+    urls = [b["url"] for b in candidates]
+    results = await check_links_chunk(urls, concurrency=concurrency, per_host_limit=per_host_limit)
 
-    connector = aiohttp.TCPConnector(limit=concurrency, limit_per_host=per_host_limit)
-    timeout = aiohttp.ClientTimeout(total=10, connect=5, sock_read=8)
-    async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
-        results = await asyncio.gather(*(_check_one_link(session, b) for b in candidates))
-
-    broken = [item for item in results if item and item.get("is_broken")]
-    redirected = [item for item in results if item and item.get("is_redirected")]
+    broken: list[dict[str, Any]] = []
+    redirected: list[dict[str, Any]] = []
+    for bookmark, result in zip(candidates, results, strict=True):
+        url = bookmark["url"]
+        title = bookmark.get("title")
+        if result["status"] == "redirected":
+            redirected.append(
+                {"title": title, "url": url, "status": result["http_status"], "final_url": result["final_url"]}
+            )
+        elif result["status"] != "ok":
+            item: dict[str, Any] = {"title": title, "url": url, "is_broken": True}
+            if result["http_status"] is not None:
+                item["status"] = result["http_status"]
+                item["final_url"] = result["final_url"]
+            if result["error_detail"]:
+                item["error"] = result["error_detail"]
+            broken.append(item)
 
     return {
         "success": True,

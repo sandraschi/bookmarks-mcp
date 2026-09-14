@@ -20,6 +20,7 @@ def _register_tools() -> None:
 
     from browser_bookmarks_tools.tools import (  # noqa: F401
         backup_restore,
+        bookmark_audit,
         bookmark_metadata,
         browser_bookmarks,
         chrome_profiles,
