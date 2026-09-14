@@ -18,6 +18,8 @@ export interface BookmarkRow {
   collections?: CollectionRef[];
   starred?: number;
   user_comment?: string | null;
+  auditStatus?: string;
+  auditCheckedAt?: string;
 }
 
 export interface BookmarkListResult {

@@ -4,6 +4,7 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
+  Link2Off,
   Loader2,
   MessageSquare,
   Pencil,
@@ -12,8 +13,16 @@ import {
   Star,
   Trash2,
   X,
+  XCircle,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { AuditJob } from "@/common/audit-api";
+import {
+  cancelAudit,
+  getAuditStatus,
+  getResultsForUrls,
+  runAudit,
+} from "@/common/audit-api";
 import {
   addBookmark,
   deleteBookmark,
@@ -45,6 +54,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -55,8 +65,17 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
 
-type SortKey = "title" | "url" | "folder" | "starred";
+type SortKey = "title" | "url" | "folder" | "starred" | "auditStatus";
 type SortDir = "asc" | "desc";
+
+const STATUS_TONE: Record<string, string> = {
+  ok: "text-emerald-300 bg-emerald-500/15 border-emerald-500/40",
+  redirected: "text-sky-300 bg-sky-500/15 border-sky-500/40",
+  dead: "text-rose-300 bg-rose-500/15 border-rose-500/40",
+  blocked: "text-amber-300 bg-amber-500/15 border-amber-500/40",
+  timeout: "text-amber-300 bg-amber-500/15 border-amber-500/40",
+  dns_error: "text-rose-300 bg-rose-500/15 border-rose-500/40",
+};
 
 function rowKey(row: BookmarkRow): string {
   return String(row.id ?? row.url ?? "");
@@ -134,10 +153,14 @@ export function BookmarksPage() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [collectionFilter, setCollectionFilter] = useState<string>("all");
   const [starredOnly, setStarredOnly] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("title");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkTargetCollection, setBulkTargetCollection] = useState<string>("");
+  const [auditJob, setAuditJob] = useState<AuditJob | null>(null);
+  const pollRef = useRef<number | null>(null);
+  const rowsRef = useRef<BookmarkRow[]>([]);
 
   const loadCollections = useCallback(async () => {
     try {
@@ -146,6 +169,31 @@ export function BookmarksPage() {
       // Collections are supplementary here; a failed fetch shouldn't block the page.
     }
   }, []);
+
+  const mergeAuditResults = useCallback(
+    async (loadedRows: BookmarkRow[]) => {
+      const urls = loadedRows.map((r) => r.url).filter((u): u is string => !!u);
+      if (urls.length === 0) return;
+      try {
+        const results = await getResultsForUrls(urls, callOptions);
+        setRows((prev) =>
+          prev.map((r) => {
+            const hit = r.url ? results[r.url] : undefined;
+            return hit
+              ? {
+                  ...r,
+                  auditStatus: hit.status,
+                  auditCheckedAt: hit.checked_at,
+                }
+              : r;
+          }),
+        );
+      } catch {
+        // Audit status is supplementary; a failed fetch shouldn't block the page.
+      }
+    },
+    [callOptions],
+  );
 
   const load = useCallback(
     async (pageOffset = 0) => {
@@ -168,11 +216,13 @@ export function BookmarksPage() {
           setRows([]);
           return;
         }
-        setRows(normalizeBookmarks(data));
+        const loaded = normalizeBookmarks(data);
+        setRows(loaded);
         setTotal(totalBookmarkCount(data));
         setOffset(pageOffset);
         setHasMore(hasMorePages(data));
         setSelected(new Set());
+        void mergeAuditResults(loaded);
       } catch (err) {
         toast({
           title: "Load failed",
@@ -183,13 +233,98 @@ export function BookmarksPage() {
         setLoading(false);
       }
     },
-    [callOptions, limit, toast],
+    [callOptions, limit, toast, mergeAuditResults],
   );
 
   useEffect(() => {
     load(0);
     loadCollections();
   }, [load, loadCollections]);
+
+  useEffect(() => {
+    rowsRef.current = rows;
+  }, [rows]);
+
+  const runningJobId = auditJob?.status === "running" ? auditJob.job_id : null;
+
+  useEffect(() => {
+    if (!runningJobId) {
+      if (pollRef.current) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+      return undefined;
+    }
+    pollRef.current = window.setInterval(async () => {
+      const updated = await getAuditStatus(runningJobId);
+      if (!updated) return;
+      setAuditJob(updated);
+      if (updated.status !== "running") {
+        void mergeAuditResults(rowsRef.current);
+        toast({
+          title:
+            updated.status === "done"
+              ? "Link audit complete"
+              : updated.status === "cancelled"
+                ? "Link audit cancelled"
+                : "Link audit failed",
+          description: `${updated.checked} of ${updated.total} checked`,
+          variant: updated.status === "error" ? "error" : "success",
+        });
+      }
+    }, 1500);
+    return () => {
+      if (pollRef.current) window.clearInterval(pollRef.current);
+    };
+  }, [runningJobId, mergeAuditResults, toast]);
+
+  const startAudit = async (scope: {
+    urls?: string[];
+    folderPath?: string;
+  }) => {
+    const started = await runAudit(callOptions, {
+      ...scope,
+      limit: scope.urls ? undefined : Math.max(total, 5000),
+    });
+    if (!started.success || !started.job_id) {
+      toast({
+        title: "Could not start audit",
+        description: started.error ?? "Unknown error",
+        variant: "error",
+      });
+      return;
+    }
+    setAuditJob({
+      job_id: started.job_id,
+      browser: callOptions.browser,
+      profile_name: callOptions.profileName ?? null,
+      status: "running",
+      total: started.total ?? scope.urls?.length ?? 0,
+      checked: 0,
+      counts_by_status: {},
+      error: null,
+      started_at: new Date().toISOString(),
+      finished_at: null,
+    });
+  };
+
+  const handleCheckPage = () =>
+    startAudit({
+      urls: rows.map((r) => r.url).filter((u): u is string => !!u),
+    });
+
+  const handleScanAll = () => startAudit({});
+
+  const handleCancelAudit = async () => {
+    if (!auditJob) return;
+    await cancelAudit(auditJob.job_id);
+  };
+
+  const handleBulkRecheck = async () => {
+    const urls = selectedRows.map((r) => r.url).filter((u): u is string => !!u);
+    if (urls.length === 0) return;
+    await startAudit({ urls });
+  };
 
   const displayedRows = useMemo(() => {
     let out = rows;
@@ -199,8 +334,14 @@ export function BookmarksPage() {
         r.collections?.some((c) => String(c.id) === collectionFilter),
       );
     }
+    if (statusFilter !== "all") {
+      out =
+        statusFilter === "unchecked"
+          ? out.filter((r) => !r.auditStatus)
+          : out.filter((r) => r.auditStatus === statusFilter);
+    }
     return sortRows(out, sortKey, sortDir);
-  }, [rows, starredOnly, collectionFilter, sortKey, sortDir]);
+  }, [rows, starredOnly, collectionFilter, statusFilter, sortKey, sortDir]);
 
   const handleSort = (key: SortKey) => {
     if (key === sortKey) {
@@ -539,6 +680,24 @@ export function BookmarksPage() {
               </SelectContent>
             </Select>
           </div>
+          <div className="grid gap-1.5">
+            <Label className="text-slate-400 text-xs">Status</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40 bg-slate-900 border-slate-800 h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-900 border-slate-800">
+                <SelectItem value="all">Any status</SelectItem>
+                <SelectItem value="unchecked">Unchecked</SelectItem>
+                <SelectItem value="ok">Ok</SelectItem>
+                <SelectItem value="redirected">Redirected</SelectItem>
+                <SelectItem value="dead">Dead</SelectItem>
+                <SelectItem value="blocked">Blocked</SelectItem>
+                <SelectItem value="timeout">Timeout</SelectItem>
+                <SelectItem value="dns_error">DNS error</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-center gap-2 pt-4">
             <Switch
               checked={starredOnly}
@@ -589,10 +748,84 @@ export function BookmarksPage() {
               <Button
                 size="sm"
                 variant="outline"
+                className="border-slate-800 h-8"
+                onClick={handleBulkRecheck}
+                disabled={auditJob?.status === "running"}
+              >
+                <Link2Off className="h-3.5 w-3.5 mr-1" /> Recheck links
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
                 className="border-slate-800 h-8 text-red-400 hover:text-red-300"
                 onClick={handleBulkDelete}
               >
                 <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-slate-800 bg-slate-950/50">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Link2Off className="h-5 w-5 text-rose-400" /> Link audit
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {auditJob?.status === "running" ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm text-slate-300">
+                <span>
+                  Checking {auditJob.checked} of {auditJob.total}…
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-slate-800 h-7"
+                  onClick={handleCancelAudit}
+                >
+                  <XCircle className="h-3.5 w-3.5 mr-1" /> Cancel
+                </Button>
+              </div>
+              <Progress
+                value={
+                  auditJob.total > 0
+                    ? (auditJob.checked / auditJob.total) * 100
+                    : 0
+                }
+                className="h-2"
+              />
+              <div className="flex flex-wrap gap-2 text-xs text-slate-400">
+                {Object.entries(auditJob.counts_by_status).map(
+                  ([status, count]) => (
+                    <span
+                      key={status}
+                      className={`rounded border px-1.5 py-0.5 ${STATUS_TONE[status] ?? "text-slate-400 border-slate-700"}`}
+                    >
+                      {status}: {count}
+                    </span>
+                  ),
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                className="border-slate-800"
+                onClick={handleCheckPage}
+                disabled={rows.length === 0}
+              >
+                Check this page ({rows.length})
+              </Button>
+              <Button
+                variant="outline"
+                className="border-slate-800"
+                onClick={handleScanAll}
+              >
+                Scan entire bookmark set ({total || "?"})
               </Button>
             </div>
           )}
@@ -668,6 +901,15 @@ export function BookmarksPage() {
                     />
                   </th>
                   <th className="pb-2 pr-4">Collections</th>
+                  <th className="pb-2 pr-4">
+                    <SortHeader
+                      label="Status"
+                      sortKey="auditStatus"
+                      active={sortKey === "auditStatus"}
+                      dir={sortDir}
+                      onSort={handleSort}
+                    />
+                  </th>
                   <th className="pb-2 w-28">Actions</th>
                 </tr>
               </thead>
@@ -794,6 +1036,24 @@ export function BookmarksPage() {
                           )}
                         </div>
                       </td>
+                      <td className="py-2 pr-4">
+                        {row.auditStatus ? (
+                          <span
+                            className={`rounded border px-1.5 py-0.5 text-xs ${STATUS_TONE[row.auditStatus] ?? "text-slate-400 border-slate-700"}`}
+                            title={
+                              row.auditCheckedAt
+                                ? `checked ${new Date(row.auditCheckedAt).toLocaleString()}`
+                                : undefined
+                            }
+                          >
+                            {row.auditStatus}
+                          </span>
+                        ) : (
+                          <span className="text-slate-600 text-xs">
+                            unchecked
+                          </span>
+                        )}
+                      </td>
                       <td className="py-2">
                         <div className="flex gap-1">
                           {isEditing ? (
@@ -829,7 +1089,7 @@ export function BookmarksPage() {
                 })}
                 {!loading && displayedRows.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-500">
+                    <td colSpan={8} className="py-8 text-center text-slate-500">
                       {rows.length === 0
                         ? "No bookmarks loaded"
                         : "No bookmarks match the current filter"}
