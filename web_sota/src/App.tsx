@@ -8,6 +8,7 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { BookmarksPage } from "@/pages/bookmarks";
 import { BulkOpsPage } from "@/pages/bulk-ops";
 import { Chat } from "@/pages/chat";
+import { CollectionsPage } from "@/pages/collections";
 import { Dashboard } from "@/pages/dashboard";
 import { Help } from "@/pages/help";
 import { LogsPage } from "@/pages/logs";
@@ -24,6 +25,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/bookmarks" element={<BookmarksPage />} />
+          <Route path="/collections" element={<CollectionsPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/tree" element={<TreePage />} />
           <Route path="/bulk" element={<BulkOpsPage />} />

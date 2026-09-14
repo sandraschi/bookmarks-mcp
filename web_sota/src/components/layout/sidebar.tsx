@@ -2,6 +2,7 @@ import {
   Bookmark,
   ChevronLeft,
   ChevronRight,
+  Folders,
   FolderTree,
   HelpCircle,
   Layers,
@@ -28,6 +29,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const navItems = [
     { href: "/", label: "Overview", icon: LayoutDashboard, exact: true },
     { href: "/bookmarks", label: "Bookmarks", icon: List },
+    { href: "/collections", label: "Collections", icon: Folders },
     { href: "/search", label: "Search", icon: Search },
     { href: "/tree", label: "Tree", icon: FolderTree },
     { href: "/bulk", label: "Bulk Ops", icon: Layers },

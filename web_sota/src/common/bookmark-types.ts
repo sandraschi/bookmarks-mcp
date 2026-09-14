@@ -1,5 +1,11 @@
 export type BrowserName = "firefox" | "chrome" | "edge" | "brave";
 
+export interface CollectionRef {
+  id: number;
+  name: string;
+  color?: string | null;
+}
+
 export interface BookmarkRow {
   id?: string | number;
   title?: string;
@@ -9,6 +15,9 @@ export interface BookmarkRow {
   dateAdded?: number;
   lastModified?: number;
   tags?: string[];
+  collections?: CollectionRef[];
+  starred?: number;
+  user_comment?: string | null;
 }
 
 export interface BookmarkListResult {

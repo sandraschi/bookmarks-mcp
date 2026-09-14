@@ -7,6 +7,22 @@ export interface BrowserCallOptions {
   forceAccess?: boolean;
 }
 
+/**
+ * The sidecar metadata/collections stores are scoped by (url, browser,
+ * profile_name). browser_bookmarks.py defaults Chromium profiles to
+ * "Default" server-side when none is given (see execute_universal_operation
+ * and the chromium branch of browser_bookmarks); reads via list/search go
+ * through that same default. Metadata/collection writes must resolve to the
+ * identical scope or they silently land under a different key than what the
+ * next list/search enrichment looks up.
+ */
+export function resolveProfileName(
+  options: BrowserCallOptions,
+): string | undefined {
+  if (options.browser === "firefox") return options.profileName;
+  return options.profileName || "Default";
+}
+
 export async function runBrowserBookmarks(
   operation: string,
   options: BrowserCallOptions,
@@ -31,13 +47,47 @@ export async function listBookmarks(
   folderId?: number,
   offset = 0,
 ): Promise<BookmarkListResult> {
-  const extra: Record<string, unknown> = { limit, offset };
+  const extra: Record<string, unknown> = {
+    limit,
+    offset,
+    include_metadata: true,
+  };
   if (folderId != null) extra.folder_id = folderId;
   return (await runBrowserBookmarks(
     "list_bookmarks",
     options,
     extra,
   )) as BookmarkListResult;
+}
+
+export async function setStarred(
+  url: string,
+  starred: number,
+  options: BrowserCallOptions,
+): Promise<Record<string, unknown>> {
+  const response = await callTool("bookmark_metadata", {
+    operation: "set_metadata",
+    url,
+    browser: options.browser,
+    profile_name: resolveProfileName(options),
+    starred,
+  });
+  return unwrapToolResult(response);
+}
+
+export async function setComment(
+  url: string,
+  userComment: string,
+  options: BrowserCallOptions,
+): Promise<Record<string, unknown>> {
+  const response = await callTool("bookmark_metadata", {
+    operation: "set_metadata",
+    url,
+    browser: options.browser,
+    profile_name: resolveProfileName(options),
+    user_comment: userComment,
+  });
+  return unwrapToolResult(response);
 }
 
 export async function searchBookmarks(
