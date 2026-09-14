@@ -100,7 +100,10 @@ export function BulkOpsPage() {
     }
   };
 
-  const firefoxOnly = browser !== "firefox";
+  // Tag tools remain Firefox-only server-side (firefox_tagging.py). Duplicates,
+  // export, and broken-link scanning are browser-agnostic via
+  // universal_bookmark_ops.py and already work for chrome/edge/brave too.
+  const tagsOnly = browser !== "firefox";
 
   return (
     <div className="space-y-6">
@@ -272,14 +275,8 @@ export function BulkOpsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {firefoxOnly && (
-                <p className="text-amber-400 text-sm">
-                  Duplicate detection is Firefox-only. Switch browser to
-                  Firefox.
-                </p>
-              )}
               <Button
-                disabled={loading || firefoxOnly}
+                disabled={loading}
                 onClick={() => run(() => findDuplicates(callOptions))}
                 className="bg-blue-600 hover:bg-blue-700"
               >
@@ -300,11 +297,6 @@ export function BulkOpsPage() {
               <CardTitle className="text-white">Export bookmarks</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {firefoxOnly && (
-                <p className="text-amber-400 text-sm">
-                  Full export is Firefox-only in this tool surface.
-                </p>
-              )}
               <Button
                 disabled={loading}
                 onClick={runExportDownload}
@@ -317,7 +309,7 @@ export function BulkOpsPage() {
                 )}
               </Button>
               <Button
-                disabled={loading || firefoxOnly}
+                disabled={loading}
                 onClick={() => run(() => exportBookmarks(callOptions, "json"))}
                 className="bg-blue-600 hover:bg-blue-700"
               >
@@ -340,14 +332,14 @@ export function BulkOpsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {firefoxOnly && (
+              {tagsOnly && (
                 <p className="text-amber-400 text-sm">
                   Tag tools are Firefox-only.
                 </p>
               )}
               <div className="flex flex-wrap gap-2">
                 <Button
-                  disabled={loading || firefoxOnly}
+                  disabled={loading || tagsOnly}
                   variant="outline"
                   className="border-slate-800"
                   onClick={() => run(() => listTags(callOptions))}
@@ -365,7 +357,7 @@ export function BulkOpsPage() {
                   </Label>
                 </div>
                 <Button
-                  disabled={loading || firefoxOnly}
+                  disabled={loading || tagsOnly}
                   onClick={() =>
                     run(() => cleanUpTags(callOptions, tagsDryRun))
                   }
@@ -387,13 +379,8 @@ export function BulkOpsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {firefoxOnly && (
-                <p className="text-amber-400 text-sm">
-                  Broken link scan is Firefox-only.
-                </p>
-              )}
               <Button
-                disabled={loading || firefoxOnly}
+                disabled={loading}
                 onClick={() => run(() => findBrokenLinks(callOptions, 25))}
                 className="bg-blue-600 hover:bg-blue-700"
               >
