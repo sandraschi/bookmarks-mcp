@@ -22,6 +22,13 @@ $McpbDir = Join-Path $RepoRoot 'mcpb'
 $ManifestPath = Join-Path $McpbDir 'manifest.json'
 if (-not (Test-Path $ManifestPath)) { throw "No mcpb/manifest.json in $RepoRoot -- cannot pack." }
 $manifest = Get-Content $ManifestPath -Raw | ConvertFrom-Json
+if ([string]::IsNullOrWhiteSpace($manifest.name)) { throw "manifest.json has no (or empty) top-level 'name' -- would produce a malformed output filename." }
+if ([string]::IsNullOrWhiteSpace($manifest.version)) { throw "manifest.json has no (or empty) top-level 'version' -- would produce a malformed output filename." }
+if (-not $manifest.server) { throw "manifest.json has no 'server' section -- cannot resolve entry_point." }
+
+if (-not (Get-Command bunx -ErrorAction SilentlyContinue)) {
+    throw "bunx not found on PATH -- install Bun (https://bun.sh) before packing; @anthropic-ai/mcpb is invoked via bunx."
+}
 
 function Step($n, $msg) { Write-Host "== $n. $msg ==" -ForegroundColor Cyan }
 
@@ -212,7 +219,18 @@ try {
         $errText = Get-Content $errLog -Raw -ErrorAction SilentlyContinue
         throw "Packaged entry point exited immediately (exit code $($proc.ExitCode)) - the bundle does not run standalone.`n$errText"
     }
+    # "Still alive" alone can't distinguish a genuinely serving process from
+    # one blocked on stdin.readline() (a stdio-transport server with no
+    # client attached looks identical for these 4 seconds) or one whose
+    # startup failed in a background thread without killing the main
+    # process. A traceback on stderr is a real signal either way; scan for
+    # one even though the process technically didn't exit.
+    $errText = Get-Content $errLog -Raw -ErrorAction SilentlyContinue
+    if ($errText -match 'Traceback \(most recent call last\)') {
+        throw "Packaged entry point logged a traceback despite staying alive - startup likely failed in a background thread.`n$errText"
+    }
     Write-Host "  OK: packaged entry point stayed alive 4s from a clean unpacked copy (pid $($proc.Id))"
+    Write-Host "  Note: this proves the bundle starts without crashing, not that it actually serves - a stdio-transport server idling on stdin looks identical to one working correctly." -ForegroundColor DarkGray
 } finally {
     if ($proc -and -not $proc.HasExited) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
     if ($null -eq $prevMcpPort) { Remove-Item Env:\MCP_PORT -ErrorAction SilentlyContinue } else { $env:MCP_PORT = $prevMcpPort }
