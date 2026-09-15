@@ -1,5 +1,6 @@
 """Core Firefox bookmark functionality with improved status checking."""
 
+import asyncio
 import base64
 import configparser
 import logging
@@ -480,7 +481,7 @@ async def delete_firefox_profile(profile_name: str, confirm_deletion: bool = Fal
             }
 
         # Delete the profile directory
-        shutil.rmtree(profile_path)
+        await asyncio.to_thread(shutil.rmtree, profile_path)
 
         # Update profiles.ini
         profiles_ini_path = get_profiles_ini_path()

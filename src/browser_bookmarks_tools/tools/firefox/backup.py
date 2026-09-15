@@ -5,6 +5,7 @@ DEPRECATED: Individual tools deprecated. Use firefox_backup portmanteau instead.
 - restore_firefox_data() ÔåÆ firefox_backup(operation='restore')
 """
 
+import asyncio
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -46,8 +47,8 @@ async def backup_firefox_data(backup_dir: str | None = None, profile_name: str |
     backup_path = backup_dir / backup_name
 
     try:
-        # Create backup
-        shutil.copytree(profile_dir, backup_path)
+        # Create backup (profiles run 100MB+ — off the loop)
+        await asyncio.to_thread(shutil.copytree, profile_dir, backup_path)
 
         return {
             "status": "success",
@@ -95,10 +96,10 @@ async def restore_firefox_data(backup_path: str, profile_name: str | None = None
             dest = profile_dir / item.name
             if dest.exists():
                 if dest.is_dir():
-                    shutil.rmtree(dest)
+                    await asyncio.to_thread(shutil.rmtree, dest)
                 else:
                     dest.unlink()
-            shutil.move(str(item), str(profile_dir))
+            await asyncio.to_thread(shutil.move, str(item), str(profile_dir))
 
         return {
             "status": "success",
