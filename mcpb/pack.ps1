@@ -1,4 +1,4 @@
-#Requires -Version 7
+#Requires -Version 5.1
 <#
 .SYNOPSIS
 Build this repo's .mcpb bundle for Claude Desktop.
@@ -90,7 +90,13 @@ if (-not (Test-Path $entryFile)) { throw "manifest.json entry_point resolves to 
 # the bundle that does its own sys.path setup and imports the real package
 # (this repo's run_server.py). Only the first case yields a clean relative
 # path under mcpb/src; detect which one we have from that.
-$entryRelToSrc = [System.IO.Path]::GetRelativePath($StageRoot, $entryFile)
+# 5.1-safe: [System.IO.Path]::GetRelativePath is .NET Core only (MethodNotFound
+# on Framework 4.x) - prefix cut is equivalent for in-src entries.
+if ($entryFile.StartsWith($StageRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+    $entryRelToSrc = $entryFile.Substring($StageRoot.Length).TrimStart('\', '/')
+} else {
+    $entryRelToSrc = '..'
+}
 if ($entryRelToSrc.StartsWith('..')) {
     # Standalone wrapper script - verify_pack.py runs it directly via runpy.
     $entryModuleOrFile = $entryFile
