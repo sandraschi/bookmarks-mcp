@@ -7,7 +7,7 @@ from browser_bookmarks_tools.tools.chromium import is_chromium_browser, list_chr
 from browser_bookmarks_tools.tools.sync_tree import sync_bookmarks_with_folders
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False})
 async def sync_bookmarks(
     source_browser: str,
     target_browser: str,

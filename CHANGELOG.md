@@ -1,6 +1,13 @@
 
 ## [Unreleased] — 2026-06-14
 
+### Added (assfix 2026-10-02, first full pass)
+- `bookmarks_shutdown` tool (confirm-gated, DESTRUCTIVE)
+- `GET /api/capabilities` standard endpoint (+ real tool count in diagnostics)
+- Tool annotations (`readOnlyHint`/`destructiveHint`) on all 22 tools
+- `.gitignore`: `build/`, `.venv/`, `reports/`; purged committed `build/` bytecode
+- `llms.txt` FastMCP version corrected (2.13 → 3.4)
+
 ### Added
 - Tauri CORS: 	auri://localhost, http://tauri.localhost, https://tauri.localhost in CORS origins
 - Tauri CORS: _TAURI env var toggle with llow_origin_regex for secure WebView access
