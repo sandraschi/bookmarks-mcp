@@ -20,7 +20,7 @@ BookmarkMetadataOperation = Literal[
 ]
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False})
 @HelpSystem.register_tool
 async def bookmark_metadata(
     operation: BookmarkMetadataOperation,

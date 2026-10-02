@@ -31,6 +31,7 @@ def _register_tools() -> None:
         firefox_tagging,
         firefox_utils,
         prefab_apps,
+        server_tools,
         sync_tools,
     )
     from browser_bookmarks_tools.tools.firefox import ai_portmanteau  # noqa: F401
@@ -74,6 +75,31 @@ def _build_web_app():
 
         return {"status": "ok", "server": "bookmarks-mcp"}
 
+    @app.get("/api/capabilities")
+    async def capabilities():
+        """Standard fleet shape for webapp discovery."""
+        try:
+            from importlib.metadata import version
+
+            _pkg_version = version("bookmarks-mcp")
+        except Exception:
+            _pkg_version = "unknown"
+        tool_names = sorted(t.name for t in await mcp.list_tools())
+        return {
+            "service": "bookmarks-mcp",
+            "version": _pkg_version,
+            "status": "ok",
+            "tool_count": len(tool_names),
+            "tools": tool_names,
+            "endpoints": [
+                "/health",
+                "/api/capabilities",
+                "/api/v1/diagnostics",
+                "/mcp",
+            ],
+            "transports": ["http", "stdio"],
+        }
+
     @app.get("/api/v1/diagnostics")
     async def diagnostics():
         try:
@@ -84,11 +110,15 @@ def _build_web_app():
             disk = psutil.disk_usage("/").percent
         except ImportError:
             cpu = mem = disk = None
+        try:
+            _tool_total = len(await mcp.list_tools())
+        except Exception:
+            _tool_total = 0
         return {
             "success": True,
             "backend": {"port": 10803, "status": "running"},
             "system": {"cpu_percent": cpu, "memory_percent": mem, "disk_percent": disk},
-            "tools": {"total": 0},
+            "tools": {"total": _tool_total},
             "cua_status": {"tesseract_available": False, "window_found": False},
         }
 

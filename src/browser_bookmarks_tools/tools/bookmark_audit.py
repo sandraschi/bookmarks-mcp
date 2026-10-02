@@ -123,7 +123,7 @@ async def _run_audit(
     return {"success": True, "job_id": job_id, "status": "running", "total": len(candidates)}
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False})
 @HelpSystem.register_tool
 async def bookmark_audit(
     operation: BookmarkAuditOperation,
