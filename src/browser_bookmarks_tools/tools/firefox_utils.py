@@ -12,7 +12,7 @@ from browser_bookmarks_tools.tools.help_tools import HelpSystem
 logger = logging.getLogger(__name__)
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False})
 @HelpSystem.register_tool(category="firefox")
 async def firefox_utils(
     operation: str,

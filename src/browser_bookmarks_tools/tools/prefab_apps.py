@@ -54,7 +54,7 @@ def _error_app(message: str) -> PrefabApp:
     return PrefabApp(view=view)
 
 
-@mcp.tool(app=True)
+@mcp.tool(app=True, annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False})
 @HelpSystem.register_tool
 async def browse_bookmarks_ui(
     browser: str,
@@ -93,7 +93,7 @@ async def browse_bookmarks_ui(
     return app
 
 
-@mcp.tool(app=True)
+@mcp.tool(app=True, annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False})
 @HelpSystem.register_tool
 async def bookmark_stats_ui(
     browser: str,
@@ -125,7 +125,7 @@ async def bookmark_stats_ui(
     return app
 
 
-@mcp.tool(app=True)
+@mcp.tool(app=True, annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False})
 @HelpSystem.register_tool
 async def import_preview_ui(
     import_path: str,
@@ -157,7 +157,7 @@ async def import_preview_ui(
     return app
 
 
-@mcp.tool(app=True)
+@mcp.tool(app=True, annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False})
 @HelpSystem.register_tool
 async def metadata_browser_ui(
     browser: str | None = None,
@@ -196,7 +196,7 @@ async def metadata_browser_ui(
     return app
 
 
-@mcp.tool(app=True)
+@mcp.tool(app=True, annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False})
 @HelpSystem.register_tool
 async def sync_preview_ui(
     source_browser: str,
@@ -254,7 +254,7 @@ async def sync_preview_ui(
     return app
 
 
-@mcp.tool(app=True)
+@mcp.tool(app=True, annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False})
 @HelpSystem.register_tool
 async def backup_manager_ui(
     browsers: list[str] | None = None,
@@ -318,7 +318,7 @@ async def backup_manager_ui(
     return app
 
 
-@mcp.tool(app=True)
+@mcp.tool(app=True, annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False})
 @HelpSystem.register_tool
 async def import_execute_ui(
     import_path: str,
