@@ -646,7 +646,7 @@ class AIBookmarkPortmanteau:
 ai_portmanteau = AIBookmarkPortmanteau()
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False})
 @HelpSystem.register_tool(category="firefox")
 async def ai_bookmark_portmanteau(
     operation: str,

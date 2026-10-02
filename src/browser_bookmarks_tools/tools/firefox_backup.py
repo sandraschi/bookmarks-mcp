@@ -14,7 +14,7 @@ from browser_bookmarks_tools.tools.help_tools import HelpSystem
 logger = logging.getLogger(__name__)
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False})
 @HelpSystem.register_tool(category="firefox")
 async def firefox_backup(
     operation: str,

@@ -12,7 +12,7 @@ from browser_bookmarks_tools.operation_types import BrowserBookmarkOperation
 from browser_bookmarks_tools.tools.help_tools import HelpSystem
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False})
 @HelpSystem.register_tool
 async def browser_bookmarks(
     operation: BrowserBookmarkOperation,
