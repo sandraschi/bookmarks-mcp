@@ -1,4 +1,4 @@
-﻿# Per-repo fleet start config for bookmarks-mcp
+# Per-repo fleet start config for bookmarks-mcp
 # Edit ports/backend target here - start.ps1 is fleet-standard.
 @{
     Name         = 'bookmarks-mcp'
@@ -10,6 +10,7 @@
         Kind          = 'uvicorn'
         UvicornTarget = 'browser_bookmarks_tools.server:app'
         SyncExtras    = @('dev')
+        SyncOnStart  = $true
         Env           = @{ WEB_PORT = '10803' }
     }
     Frontend = @{
